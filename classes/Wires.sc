@@ -15,19 +15,20 @@ Wires {
 		setupLock = Semaphore();
 	}
 
-	*new {|delay = 2, randTime = 0.0|
-		^super.new.wiresInit(delay, randTime);
+	*new {|delay = 2, randTime = 0.0, reload = false|
+		^super.new.wiresInit(delay, randTime, reload);
 	}
 
-	wiresInit {|dt, rt|
+	wiresInit {|dt, rt, reload|
 		delay = dt;
 		randTime = rt;
 		renew = Routine {
-			setupLock.wait;
-			Wires_Def.setup;
-			if (Server.default.pid.isNil) {Server.default.bootSync};
-			// Server.default.sync;
-			setupLock.signal;
+			protect {
+				setupLock.wait;
+				Wires_Def.setup(reload);
+				if (Server.default.pid.isNil) {Server.default.bootSync};
+				// Server.default.sync;
+			} {setupLock.signal};
 			root = Wires_Node.out;
 			{
 				(delay * (2 ** rand2(randTime))).wait;

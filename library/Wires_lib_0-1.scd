@@ -17,7 +17,7 @@
 					(2,2..8).collect {|n|[Dseq, [((1..n-1)++(n..2))/n, inf]]}).collect
 				{|p2| var class2, args2; #class2, args2 = p2;
 					{DemandEnvGen.perform(rate, class1.performList(\new, args1),
-						class2.performList(\new, args2))}
+						class2.performList(\new, args2), 0)}
 		}}}.flat.collect([_,[]])),
 		// OSCILLATEURS
 		[\kr, \ar].collect {|rate, lvl|

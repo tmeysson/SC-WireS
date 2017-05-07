@@ -25,8 +25,8 @@ Wires_Def {
 		libUpdate = false;
 	}
 
-	*setup {
-		this.readLib;
+	*setup {|reload|
+		this.readLib(reload: reload);
 		if (libUpdate) {
 			this.makeDefs;
 			this.makeWeights;
