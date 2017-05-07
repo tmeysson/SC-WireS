@@ -36,5 +36,5 @@ w = Wires();
 w.stop;
 
 // ensemble de graphes
-w = {Wires(randTime: 1.0)} ! 3;
-w.do(_.stop);
+Wires.multi(5);
+Wires.stopAll;

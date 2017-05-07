@@ -21,13 +21,18 @@ Wires_Def {
 	// le nombre de fils et le poids relatif
 	var <nbSons, <weight;
 
+	*initClass {
+		libUpdate = false;
+	}
+
 	*setup {
 		this.readLib;
 		if (libUpdate) {
 			this.makeDefs;
 			this.makeWeights;
 			this.addDefs;
-		}
+			libUpdate = false;
+		};
 	}
 
 	// récupérer le contenu de la bibliothèque
