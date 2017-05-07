@@ -62,14 +62,7 @@ Wires_Def {
 				// cas d'une pondération
 				{def[0].isNumber}
 				{
-					if (def.size == 2)
-					{ rec.(def[1], "%-%".format(prefix, i), def[0] * weight) }
-					{
-						def[1..].collect {|e, j|
-							rec.(e, "%-%-%".format(prefix, i, j),
-							def[0] * weight)
-						}.reduce('++')
-					};
+					rec.(def[1..], "%-%".format(prefix, i), def[0] * weight)
 				}
 				// cas récursif (par défaut)
 				{ rec.(def, "%-%".format(prefix, i), weight) };
