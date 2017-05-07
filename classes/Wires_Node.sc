@@ -5,10 +5,14 @@ Wires_Node {
 	var subNodes;
 	// le Group
 	var group;
+	// le groupe des sous-noeuds
+	var subGroup;
 	// le Bus de sortie
 	var <outBus;
 	// la profondeur
 	var depth;
+	// le nombre de noeuds du sous-graphe
+	var <numNodes;
 
 	*new {|rate = 'audio', depth = 0, target|
 		^super.new.nodeInit(rate, depth, target);
@@ -17,8 +21,6 @@ Wires_Node {
 	nodeInit {|rate, dpth, target|
 		// la définition
 		var def;
-		// le groupe des sous-noeuds
-		var subGroup;
 		// les arguments
 		var args;
 		// profondeur
@@ -44,16 +46,16 @@ Wires_Node {
 				["p%".format(i).asSymbol, Wires_Node(rate, depth + 1, subGroup)]
 			};
 			// enregistrer les sous-noeuds
-			args = args.flop;
-			subNodes = args[1];
+			subNodes = args;
 			// obtenir les Bus de sortie
-			args = [args[0], args[1].collect(_.outBus)].flop;
+			args = args.collect {|e| [e[0], e[1].outBus] };
 			// aplatir la liste
 			args = args.reduce('++');
 		} {
 			// il n'y a pas de sous-noeuds
 			subNodes = [];
 		};
+		numNodes = 1 + subNodes.sum {|e| e[1].numNodes};
 		// ajouter le Bus de sortie
 		args = [out: outBus] ++ args;
 		// créer le Synth
@@ -67,22 +69,44 @@ Wires_Node {
 	}
 
 	outNodeInit {
-		var subGroup, input;
+		var input;
+		depth = -1;
 		// créer le groupe d'accueil
 		group = Group();
 		// créer le sous-groupe
 		subGroup = ParGroup(group);
 		// créer l'entrée
 		input = Wires_Node('audio', 0, subGroup);
-		subNodes = [input];
+		subNodes = [[in: input]];
+		numNodes = input.numNodes + 1;
 		// créer le Synth
 		synth = Wires_Def.outDef.makeInstance([in: input.outBus], group);
-		// libérer le Bus à la fin
-		synth.onFree {this.free};
+		// libérer le groupe à la fin
+		synth.onFree {group.free};
+	}
+
+	renew {|num|
+		var select = subNodes.choose;
+		var node = select[1];
+		if (node.numNodes <= num)
+		// remplacer le noeud
+		{
+			var new = Wires_Node(node.outBus.rate, depth + 1, subGroup);
+			synth.set(select[0], new.outBus);
+			select[1] = new;
+			numNodes = numNodes - node.numNodes + new.numNodes;
+			node.free;
+		}
+		// propager la requête
+		{
+			numNodes = numNodes - node.numNodes;
+			node.renew(num);
+			numNodes = numNodes + node.numNodes;
+		}
 	}
 
 	free {
-		if (group.notNil) {group.free};
+		if (group.notNil) {group.free} {synth.free};
 	}
 
 	release {
