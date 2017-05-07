@@ -14,6 +14,8 @@ Wires_Def {
 	var synthDef, <synthArgs;
 	// le type de sortie
 	var <rate;
+	// le nombre de fils et le poids relatif
+	var <nbSons, <weight;
 
 	// récupérer le contenu de la bibliothèque
 	*readLib {|major = 0, minor = 1, reload = false|
@@ -29,11 +31,58 @@ Wires_Def {
 
 	// compiler les définitions
 	*makeDefs {|reload = false|
+		// fonction récursive d'évaluation de la bibliothèque
+		var rec;
 		// initialiser les definitions
 		defs = Dictionary.newFrom([audio: List(), control: List()]);
 		// lire la bibliothèque si nécessaire
 		this.readLib(reload: reload);
 		// compiler les définitions
+		rec = {|elt, prefix, weight|
+			// pour chaque définition
+			elt.collect {|def, i|
+				case
+				// cas terminal
+				{def[0].isFunction}
+				{
+					// énumérer les combinaisons de paramètres
+					({|k|
+						[
+							['scalar', { Rand(-1, 1) }],
+							['control', {|n| In.kr("p%".format(n).asSymbol.kr) }],
+							['audio', {|n| In.ar("p%".format(n).asSymbol.kr) }]
+						][def[1][k]]
+					} ! def[1].size).allTuples
+					// pour chaque combinaison
+					.collect {|parms, j|
+						// créer la définition
+						this.new("%-%-%".format(prefix, i, j), def[0], parms, weight);
+					}
+				}
+				// cas d'une pondération
+				{def[0].isNumber}
+				{
+					if (def.size == 2)
+					{ rec.(def[1], "%-%".format(prefix, i), def[0] * weight) }
+					{
+						def[1..].collect {|e, j|
+							rec.(e, "%-%-%".format(prefix, i, j),
+							def[0] * weight)
+						}.reduce('++')
+					};
+				}
+				// cas récursif (par défaut)
+				{ rec.(def, "%-%".format(prefix, i), weight) };
+			}
+			// concatener les résultats
+			.reduce('++');
+		};
+
+		rec.(libContent, "", 1)
+		// ajouter dans la liste correspondante
+		.do {|def| defs[def.rate].add(def) };
+
+/*
 		// pour chaque définition
 		libContent.collect {|def, i|
 			// énumérer les combinaisons de paramètres
@@ -54,7 +103,7 @@ Wires_Def {
 		.reduce('++')
 		// ajouter dans la liste correspondante
 		.do {|def| defs[def.rate].add(def) };
-
+*/
 		// définition du module de sortie
 		volume = 0.5;
 		outDef = this.out;
@@ -70,16 +119,22 @@ Wires_Def {
 
 	// compiler les poids
 	*makeWeights {|start = 1.5, factor = (2/3), nblvls = 3|
-		// listes des nombre de fils
-		var sons = defs.collect {|defList|
+		// listes des [nombre de fils, poids relatif]
+		var defSpecs = defs.collect(_.collect {|def| [def.nbSons, def.weight]});
+		var sons = defSpecs.collect(_.collect(_[0]));
+		/*
+		{|defList|
 			defList.collect {|def|
 					def.synthArgs.inject(0) {|acc, it| acc + (it != 'scalar').asInteger}
 			}
 		};
+		*/
 		// fonctions de poids
-		var weightFuncs = sons.collect {|sonsList|
+		var weightFuncs = defSpecs.collect {|specList|
+			var sonsList, weightList;
+			#sonsList, weightList = specList.flop;
 			{|alpha|
-				((sonsList + 1) ** alpha.neg).normalizeSum
+				(weightList * ((sonsList + 1) ** alpha.neg)).normalizeSum
 			}
 		};
 
@@ -119,13 +174,13 @@ Wires_Def {
 		}
 	}
 
-	*new {|defNum, subNum, func, parms|
-		^super.new.defInit(defNum, subNum, func, parms);
+	*new {|idNum, func, parms, weight|
+		^super.new.defInit(idNum, func, parms, weight);
 	}
 
-	defInit {|defNum, subNum, func, parms|
+	defInit {|idNum, func, parms, wght|
 		// créer la SynthDef
-		synthDef = SynthDef("wires-%-%".format(defNum, subNum).asSymbol,
+		synthDef = SynthDef("wires%".format(idNum).asSymbol,
 			{|out|
 				// créer le UGenGraph
 				var graph = func.(*parms.collect {|p, i| p[1].(i)});
@@ -138,6 +193,9 @@ Wires_Def {
 		);
 		// enregistrer les types des arguments
 		synthArgs = parms.collect(_[0]);
+		// enregistrer le nombre de fils et le poids
+		nbSons = synthArgs.inject(0) {|acc, it| acc + (it != 'scalar').asInteger};
+		weight = wght;
 	}
 
 	*out {
