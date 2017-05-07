@@ -9,16 +9,15 @@
 		// CONSTANTE
 		normalizeWeight.([[5, [{ DC.kr(Rand(-1, 1)) }, []]]] ++
 		// GENERATEURS DE SEQUENCE
-		[\kr, \ar].collect {|rate|
 			([[Dwhite, [-1, 1]]] ++ (1..4).collect {|n|[Dxrand, [(n.neg..n)/n, inf]]} ++
-			(1..4).collect {|n|[Dseq, [(n.neg..n)/n, inf]]}).collect
+				(1..4).collect {|n|[Dseq, [(n.neg..n)/n, inf]]}).collect
 			{|p1| var class1, args1; #class1, args1 = p1;
 				([[Dwhite, [0.2, 4]]] ++ (1..4).collect {|n|[Dxrand, [(1..2*n)/n, inf]]} ++
 					(2,2..8).collect {|n|[Dseq, [((1..n-1)++(n..2))/n, inf]]}).collect
 				{|p2| var class2, args2; #class2, args2 = p2;
-					{DemandEnvGen.perform(rate, class1.performList(\new, args1),
+					{DemandEnvGen.kr(class1.performList(\new, args1),
 						class2.performList(\new, args2), 0)}
-		}}}.flat.collect([_,[]])),
+		}}.flat.collect([_,[]])),
 		// OSCILLATEURS
 		[\kr, \ar].collect {|rate, lvl|
 			[SinOsc, LFSaw, LFPulse, LFTri, LFNoise0, LFNoise1].collect {|class|
