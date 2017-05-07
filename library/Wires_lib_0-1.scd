@@ -13,7 +13,8 @@
 				(1..4).collect {|n|[Dseq, [((n.neg..n-1)++(n..n.neg+1))/n, inf]]}).collect
 			{|p1| var class1, args1; #class1, args1 = p1;
 				([[Dwhite, [0.1, 2]]] ++ (1..4).collect {|n|[Dxrand, [0.5**(1..n), inf]]} ++
-					(1..4).collect {|n|[Dseq, [({|i|(0.5**i)!(2**i)}!n).scramble, inf]]}).collect
+					(1..4).collect {|n|[Dseq,
+						[({|i|(0.5**i)!(2**i)}!n).reduce('++').scramble, inf]]}).collect
 				{|p2| var class2, args2; #class2, args2 = p2;
 					{DemandEnvGen.kr(class1.performList(\new, args1),
 						class2.performList(\new, args2), 0)}
