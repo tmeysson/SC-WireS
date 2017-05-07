@@ -36,5 +36,5 @@ w = Wires(reload: true);
 w.stop;
 
 // ensemble de graphes
-Wires.multi(5, reload: true);
+Wires.multi(5, reload: false);
 Wires.stopAll;

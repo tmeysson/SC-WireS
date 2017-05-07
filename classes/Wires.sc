@@ -23,12 +23,11 @@ Wires {
 		delay = dt;
 		randTime = rt;
 		renew = Routine {
-			protect {
-				setupLock.wait;
-				if (Server.default.pid.isNil) {Server.default.bootSync};
-				Wires_Def.setup(reload, volume);
-				Server.default.sync;
-			} {setupLock.signal};
+			setupLock.wait;
+			Server.default.bootSync;
+			Wires_Def.setup(reload, volume);
+			Server.default.sync;
+			setupLock.signal;
 			root = Wires_Node.out;
 			{
 				(delay * (2 ** rand2(randTime))).wait;
@@ -39,10 +38,14 @@ Wires {
 	}
 
 	*multi {|num = 0, volume = 0.25, reload = false|
-		Server.default.options.maxNodes = max(Server.default.options.maxNodes, 256 * num);
+		// Server.default.options.maxNodes = max(Server.default.options.maxNodes, 256 * num);
 		Routine {
-			num.do { this.new(volume: volume, randTime: 1.0, reload: reload);
-				reload = false; 0.2.wait; };
+			setupLock.wait;
+			Server.default.bootSync;
+			Wires_Def.setup(reload, volume);
+			Server.default.sync;
+			setupLock.signal;
+			num.do { this.new(randTime: 1.0, reload: false); 1.wait; };
 		}.play;
 	}
 
