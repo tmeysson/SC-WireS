@@ -16,8 +16,8 @@ Wires_Def {
 	var <rate;
 
 	// récupérer le contenu de la bibliothèque
-	*readLib {|major = 0, minor = 1|
-		if (libVersion != [major, minor])
+	*readLib {|major = 0, minor = 1, reload = false|
+		if (reload || (libVersion != [major, minor]))
 		{
 			var src = File(Platform.userExtensionDir +/+ "Wires" +/+ "library" +/+
 				"Wires_lib_%-%.scd".format(major, minor), "r");
@@ -28,11 +28,11 @@ Wires_Def {
 	}
 
 	// compiler les définitions
-	*makeDefs {
+	*makeDefs {|reload = false|
 		// initialiser les definitions
 		defs = Dictionary.newFrom([audio: List(), control: List()]);
 		// lire la bibliothèque si nécessaire
-		this.readLib;
+		this.readLib(reload: reload);
 		// compiler les définitions
 		// pour chaque définition
 		libContent.collect {|def, i|
