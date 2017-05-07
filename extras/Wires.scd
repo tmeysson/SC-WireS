@@ -34,3 +34,7 @@ r.stop; g.release;
 // idem par l'interface
 w = Wires();
 w.stop;
+
+// ensemble de graphes
+w = {Wires(randTime: 1.0)} ! 3;
+w.do(_.stop);

@@ -1,6 +1,8 @@
 Wires_Def {
 	// la version et le contenu de la bibliothèque
 	classvar libVersion, libContent;
+	// indicateur de mise à jour de la bibliothèque
+	classvar libUpdate;
 	// les définitions
 	classvar defs;
 	// la définition du module de sortie
@@ -19,6 +21,15 @@ Wires_Def {
 	// le nombre de fils et le poids relatif
 	var <nbSons, <weight;
 
+	*setup {
+		this.readLib;
+		if (libUpdate) {
+			this.makeDefs;
+			this.makeWeights;
+			this.addDefs;
+		}
+	}
+
 	// récupérer le contenu de la bibliothèque
 	*readLib {|major = 0, minor = 1, reload = false|
 		if (reload || (libVersion != [major, minor]))
@@ -28,6 +39,7 @@ Wires_Def {
 			libContent = src.readAllString.interpret;
 			src.close;
 			libVersion = [major, minor];
+			libUpdate = true;
 		}
 	}
 
@@ -37,8 +49,6 @@ Wires_Def {
 		var rec;
 		// initialiser les definitions
 		defs = Dictionary.newFrom([audio: List(), control: List()]);
-		// lire la bibliothèque si nécessaire
-		this.readLib(reload: reload);
 		// compiler les définitions
 		rec = {|elt, prefix, weight|
 			// pour chaque définition
@@ -77,28 +87,28 @@ Wires_Def {
 		// ajouter dans la liste correspondante
 		.do {|def| defs[def.rate].add(def) };
 
-/*
+		/*
 		// pour chaque définition
 		libContent.collect {|def, i|
-			// énumérer les combinaisons de paramètres
-			({|k|
-				[
-					['scalar', { Rand(-1, 1) }],
-					['control', {|n| In.kr("p%".format(n).asSymbol.kr) }],
-					['audio', {|n| In.ar("p%".format(n).asSymbol.kr) }]
-				][def[1][k]]
-			} ! def[1].size).allTuples
-			// pour chaque combinaison
-			.collect {|parms, j|
-			// créer la définition
-				this.new(i, j, def[0], parms);
-			}
+		// énumérer les combinaisons de paramètres
+		({|k|
+		[
+		['scalar', { Rand(-1, 1) }],
+		['control', {|n| In.kr("p%".format(n).asSymbol.kr) }],
+		['audio', {|n| In.ar("p%".format(n).asSymbol.kr) }]
+		][def[1][k]]
+		} ! def[1].size).allTuples
+		// pour chaque combinaison
+		.collect {|parms, j|
+		// créer la définition
+		this.new(i, j, def[0], parms);
+		}
 		}
 		// concatener les résultats
 		.reduce('++')
 		// ajouter dans la liste correspondante
 		.do {|def| defs[def.rate].add(def) };
-*/
+		*/
 		// définition du module de sortie
 		volume = 0.5;
 		outDef = this.out;

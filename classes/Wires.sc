@@ -3,22 +3,22 @@ Wires {
 	// la racine du graphe
 	var root;
 	// la Routine de renouvellement
-	var renew, delay;
+	var renew, delay, randTime;
 
-	*new {|delay = 2|
-		^super.new.wiresInit(delay);
+	*new {|delay = 2, randTime = 0.0|
+		^super.new.wiresInit(delay, randTime);
 	}
 
-	wiresInit {|dt|
-		Wires_Def.makeDefs(true).makeWeights;
+	wiresInit {|dt, rt|
 		delay = dt;
+		randTime = rt;
 		renew = Routine {
 			Server.default.bootSync;
-			Wires_Def.addDefs;
+			Wires_Def.setup;
 			Server.default.sync;
 			root = Wires_Node.out;
 			{
-				delay.wait;
+				(delay * (2 ** rand2(randTime))).wait;
 				root.renew((rand(1.0) ** 2) * (root.numNodes - 1) + 1);
 			}.loop;
 		}.play;
