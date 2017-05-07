@@ -13,6 +13,8 @@ Wires_Node {
 	var depth;
 	// le nombre de noeuds du sous-graphe
 	var <numNodes;
+	// la date de création
+	var <date;
 
 	*new {|rate = 'audio', depth = 0, target|
 		^super.new.nodeInit(rate, depth, target);
@@ -23,6 +25,8 @@ Wires_Node {
 		var def;
 		// les arguments
 		var args;
+		// date
+		date = Date.getDate.rawSeconds;
 		// profondeur
 		depth = dpth;
 		// obtenir une définition aléatoire
@@ -70,6 +74,9 @@ Wires_Node {
 
 	outNodeInit {
 		var input;
+		// date
+		date = Date.getDate.rawSeconds;
+		// profondeur
 		depth = -1;
 		// créer le groupe d'accueil
 		group = Group();
@@ -86,7 +93,7 @@ Wires_Node {
 	}
 
 	renew {|num|
-		var select = subNodes.choose;
+		var select = subNodes.minItem {|it| it[1].date};
 		var node = select[1];
 		if (node.numNodes <= num)
 		// remplacer le noeud
