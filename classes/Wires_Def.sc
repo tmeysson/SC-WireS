@@ -9,6 +9,8 @@ Wires_Def {
 	classvar weights;
 	// le nombre de niveaux par cible d'espérance
 	classvar nbLevels;
+	// les SynthDef de transition
+	classvar transDefs;
 
 	// la définition et les arguments
 	var synthDef, <synthArgs;
@@ -100,12 +102,23 @@ Wires_Def {
 		// définition du module de sortie
 		volume = 0.5;
 		outDef = this.out;
+
+		// définition de la transition
+		transDefs = ['audio', 'control'].collect {|it|
+			var rate = switch(it) {'audio'} {\ar} {'control'} {\kr};
+			SynthDef("wires-trans-%".format(it).asSymbol, {|out, in1, in2|
+				var env = Line.kr(doneAction: 2);
+				Out.perform(rate, out, ((1 - env) * In.perform(rate, in1)) +
+					(env * In.perform(rate, in2)));
+			})
+		};
 	}
 
 	*addDefs {
 		// ajouter les définitions
 		defs.do(_.do(_.add));
 		outDef.add;
+		transDefs.do(_.add);
 	}
 
 	add { synthDef.add }
