@@ -6,6 +6,8 @@
 	var mult = {|a| 2**(gain.(a)*3)};
 	var normalizeWeight = {|list, weight = 1| [weight/list.size, list]};
 	[
+		// CONSTANTE
+		[0.2, [{ DC.kr(Rand(-1, 1)) }, []]],
 		// OSCILLATEURS
 		[\kr, \ar].collect {|rate, lvl|
 			[SinOsc, LFSaw, LFPulse, LFTri, LFNoise0, LFNoise1].collect {|class|
