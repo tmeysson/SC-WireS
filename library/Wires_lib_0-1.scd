@@ -7,17 +7,17 @@
 	var normalizeWeight = {|list, weight = 1| [weight/list.size, list]};
 	[
 		// CONSTANTE
-		normalizeWeight.([[5, [{ DC.kr(Rand(-1, 1)) }, []]]] ++
+		[0.5, [{ DC.kr(Rand(-1, 1)) }, []]], normalizeWeight.(
 		// GENERATEURS DE SEQUENCE
 			([[Dwhite, [-1, 1]]] ++ (1..4).collect {|n|[Dxrand, [(n.neg..n)/n, inf]]} ++
-				(1..4).collect {|n|[Dseq, [(n.neg..n)/n, inf]]}).collect
+				(1..4).collect {|n|[Dseq, [((n.neg..n-1)++(n..n.neg+1))/n, inf]]}).collect
 			{|p1| var class1, args1; #class1, args1 = p1;
-				([[Dwhite, [0.2, 4]]] ++ (1..4).collect {|n|[Dxrand, [(1..2*n)/n, inf]]} ++
-					(2,2..8).collect {|n|[Dseq, [((1..n-1)++(n..2))/n, inf]]}).collect
+				([[Dwhite, [0.1, 2]]] ++ (1..4).collect {|n|[Dxrand, [0.5**(1..n), inf]]} ++
+					(1..4).collect {|n|[Dseq, [({|i|(0.5**i)!(2**i)}!n).scramble, inf]]}).collect
 				{|p2| var class2, args2; #class2, args2 = p2;
 					{DemandEnvGen.kr(class1.performList(\new, args1),
 						class2.performList(\new, args2), 0)}
-		}}.flat.collect([_,[]])),
+		}}.flat.collect{|f| [f,[]]}),
 		// OSCILLATEURS
 		[\kr, \ar].collect {|rate, lvl|
 			[SinOsc, LFSaw, LFPulse, LFTri, LFNoise0, LFNoise1].collect {|class|
