@@ -25,7 +25,8 @@ Wires_Def {
 		libUpdate = false;
 	}
 
-	*setup {|reload|
+	*setup {|reload, vol = 0.25|
+		volume = vol;
 		this.readLib(reload: reload);
 		if (libUpdate) {
 			this.makeDefs;
@@ -93,7 +94,6 @@ Wires_Def {
 		.do {|def| defs[def.rate].add(def) };
 
 		// définition du module de sortie
-		volume = 0.5;
 		outDef = this.out;
 
 		// définition de la transition
