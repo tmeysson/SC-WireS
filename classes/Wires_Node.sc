@@ -73,7 +73,6 @@ Wires_Node {
 	}
 
 	outNodeInit {
-		var input;
 		// date
 		date = Date.getDate.rawSeconds;
 		// profondeur
@@ -83,11 +82,12 @@ Wires_Node {
 		// créer le sous-groupe
 		subGroup = ParGroup(group);
 		// créer l'entrée
-		input = Wires_Node('audio', 0, subGroup);
-		subNodes = [[in: input]];
-		numNodes = input.numNodes + 1;
+		subNodes = [[in: Wires_Node('audio', 0, subGroup)],
+			[pos: Wires_Node('control', 0, subGroup)]];
+		numNodes = subNodes.sum {|e| e[1].numNodes } + 1;
 		// créer le Synth
-		synth = Wires_Def.outDef.makeInstance([in: input.outBus], group);
+		synth = Wires_Def.outDef.makeInstance(subNodes.do {|p| [p[0], p[1].outBus]}.reduce('++'),
+			group);
 		// libérer le groupe à la fin
 		synth.onFree {group.free};
 	}

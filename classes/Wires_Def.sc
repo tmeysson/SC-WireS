@@ -195,10 +195,11 @@ Wires_Def {
 	}
 
 	outDefInit {
-		synthDef = SynthDef('wires_out', {|in, gate = 1|
-			Out.ar(0, (volume * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(in)) ! 2)
+		synthDef = SynthDef('wires_out', {|in, pos, gate = 1|
+			Out.ar(0, Pan2.ar(volume * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(in),
+				In.kr(pos)))
 		});
-		synthArgs = ['audio'];
+		synthArgs = ['audio', 'control'];
 	}
 
 	*randDef {|rate, depth|
