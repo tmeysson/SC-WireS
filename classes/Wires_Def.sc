@@ -37,11 +37,13 @@ Wires_Def {
 		// pour chaque définition
 		libContent.collect {|def, i|
 			// énumérer les combinaisons de paramètres
-			([
-				['scalar', { Rand(-1, 1) }],
-				['control', {|n| In.kr("p%".format(n).asSymbol.kr) }],
-				['audio', {|n| In.ar("p%".format(n).asSymbol.kr) }]
-			][..def[2]] ! def[1]).allTuples
+			({|k|
+				[
+					['scalar', { Rand(-1, 1) }],
+					['control', {|n| In.kr("p%".format(n).asSymbol.kr) }],
+					['audio', {|n| In.ar("p%".format(n).asSymbol.kr) }]
+				][def[1][k]]
+			} ! def[1].size).allTuples
 			// pour chaque combinaison
 			.collect {|parms, j|
 			// créer la définition
