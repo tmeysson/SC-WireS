@@ -21,11 +21,9 @@ r.stop; g.do(_.release);
 Wires_Def.makeDefs(true).makeWeights.addDefs;
 g = Wires_Node.out;
 r = Routine {
-	var num;
 	{
 		2.wait;
-		g.renew(num = ((rand(1.0) ** 2) * (g.numNodes - 1) + 1));
-		"%, %".format(num, g.numNodes).postln
+		g.renew((rand(1.0) ** 2) * (g.numNodes - 1) + 1);
 	}.loop;
 }.play;
 )
