@@ -143,25 +143,18 @@ Wires_Def {
 	}
 
 	outDefInit {
-		synthDef = SynthDef('wires_out', {|p0, gate = 1|
-			Out.ar(0, (volume * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(p0)) ! 2)
+		synthDef = SynthDef('wires_out', {|in, gate = 1|
+			Out.ar(0, (volume * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(in)) ! 2)
 		});
 		synthArgs = ['audio'];
 	}
 
-	*randInstance {|rate, depth, outBus, target|
+	*randDef {|rate, depth|
 		// choisir une définition suivant les poids et la profondeur
-		var def = defs[rate][weights[rate][(depth/nbLevels).floor.clip(0,2)].windex];
-		// retourner un Synth
-		^def.makeInstance(depth, outBus, target);
+		^defs[rate][weights[rate][(depth/nbLevels).floor.clip(0,2)].windex];
 	}
 
-	makeInstance {|depth, outBus, target|
-		var subGroup = ParGroup(target);
-		^Synth(synthDef.name, [out: outBus] ++
-			synthArgs.collect {|rate, i|
-				if (rate != 'scalar')
-				{["p%".format(i).asSymbol, Wires_Node(rate, depth + 1, subGroup).outBus]}
-		}.select(_.notNil).reduce('++'), target, 'addToTail');
+	makeInstance {|args, target|
+		^Synth(synthDef.name, args, target, 'addToTail');
 	}
 }
