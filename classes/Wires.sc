@@ -31,7 +31,7 @@ Wires {
 			root = Wires_Node.out;
 			{
 				(delay * (2 ** rand2(randTime))).wait;
-				root.renew((rand(1.0) ** 2) * (root.numNodes - 1) + 1);
+				root.renew((rand(1.0)/* ** 2*/) * (root.numNodes - 1) + 1);
 			}.loop;
 		}.play;
 		instances.add(this);
