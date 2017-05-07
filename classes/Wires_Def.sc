@@ -92,28 +92,6 @@ Wires_Def {
 		// ajouter dans la liste correspondante
 		.do {|def| defs[def.rate].add(def) };
 
-		/*
-		// pour chaque définition
-		libContent.collect {|def, i|
-		// énumérer les combinaisons de paramètres
-		({|k|
-		[
-		['scalar', { Rand(-1, 1) }],
-		['control', {|n| In.kr("p%".format(n).asSymbol.kr) }],
-		['audio', {|n| In.ar("p%".format(n).asSymbol.kr) }]
-		][def[1][k]]
-		} ! def[1].size).allTuples
-		// pour chaque combinaison
-		.collect {|parms, j|
-		// créer la définition
-		this.new(i, j, def[0], parms);
-		}
-		}
-		// concatener les résultats
-		.reduce('++')
-		// ajouter dans la liste correspondante
-		.do {|def| defs[def.rate].add(def) };
-		*/
 		// définition du module de sortie
 		volume = 0.5;
 		outDef = this.out;
@@ -143,13 +121,6 @@ Wires_Def {
 		// listes des [nombre de fils, poids relatif]
 		var defSpecs = defs.collect(_.collect {|def| [def.nbSons, def.weight]});
 		var sons = defSpecs.collect(_.collect(_[0]));
-		/*
-		{|defList|
-			defList.collect {|def|
-					def.synthArgs.inject(0) {|acc, it| acc + (it != 'scalar').asInteger}
-			}
-		};
-		*/
 		// fonctions de poids
 		var weightFuncs = defSpecs.collect {|specList|
 			var sonsList, weightList;
