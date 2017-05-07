@@ -39,7 +39,7 @@ Wires_Def {
 	*readLib {|major = 0, minor = 1, reload = false|
 		if (reload || (libVersion != [major, minor]))
 		{
-			var src = File(Platform.userExtensionDir +/+ "Wires" +/+ "library" +/+
+			var src = File(Platform.userExtensionDir +/+ "SC-Wires" +/+ "library" +/+
 				"Wires_lib_%-%.scd".format(major, minor), "r");
 			libContent = src.readAllString.interpret;
 			src.close;
