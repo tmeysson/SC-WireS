@@ -30,3 +30,7 @@ r = Routine {
 
 // arrêter
 r.stop; g.release;
+
+// idem par l'interface
+w = Wires();
+w.stop;
