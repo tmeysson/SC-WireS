@@ -29,9 +29,9 @@
 		typeWeight.(2,
 			[\kr, \ar].collect {|rate, lvl| normalizeWeight.(
 				[SinOsc, LFSaw, LFPulse, LFTri, LFNoise0, LFNoise1].collect {|class|
-					[{|amp, freq|
-						gain.(amp) * class.perform(rate, freqRange[rate].(freq));
-					}, [(0..1), (0..lvl+1)]]
+					[{|amp, freq, fm|
+						gain.(amp) * class.perform(rate, freqRange[rate].(freq) * (2 ** fm));
+					}, (0..1)!2 ++ [(0,2..lvl*2)]]
 			})}
 		),
 
