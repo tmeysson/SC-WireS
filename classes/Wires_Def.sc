@@ -2,7 +2,7 @@ Wires_Def {
 	// la version et le contenu de la bibliothèque
 	classvar libVersion, libContent;
 	// indicateur de mise à jour de la bibliothèque
-	classvar libUpdate;
+	classvar libUpdate, libDate;
 	// les définitions
 	classvar defs;
 	// la définition du module de sortie
@@ -25,9 +25,9 @@ Wires_Def {
 		libUpdate = false;
 	}
 
-	*setup {|reload, vol = 0.25|
+	*setup {|vol = 0.25|
 		volume = vol;
-		this.readLib(reload: reload);
+		this.readLib;
 		if (libUpdate) {
 			this.makeDefs;
 			this.makeWeights;
@@ -37,20 +37,24 @@ Wires_Def {
 	}
 
 	// récupérer le contenu de la bibliothèque
-	*readLib {|major = 0, minor = 1, reload = false|
-		if (reload || (libVersion != [major, minor]))
+	*readLib {|version = "0-1"|
+		var fileName = Platform.userExtensionDir +/+ "SC-WireS" +/+ "library" +/+
+				"Wires_lib_%.scd".format(version);
+		var fileDate = if (File.exists(fileName)) {File.mtime(fileName)}
+		{ Error("Library file % does not exist".format(fileName)).throw };
+		if (((libDate ? 0) < fileDate) || (libVersion != version))
 		{
-			var src = File(Platform.userExtensionDir +/+ "SC-WireS" +/+ "library" +/+
-				"Wires_lib_%-%.scd".format(major, minor), "r");
+			var src = File(fileName, "r");
 			libContent = src.readAllString.interpret;
 			src.close;
-			libVersion = [major, minor];
+			libVersion = version;
+			libDate = Date.getDate.rawSeconds;
 			libUpdate = true;
 		}
 	}
 
 	// compiler les définitions
-	*makeDefs {|reload = false|
+	*makeDefs {
 		// fonction récursive d'évaluation de la bibliothèque
 		var rec;
 		// initialiser les definitions

@@ -15,17 +15,17 @@ Wires {
 		setupLock = Semaphore();
 	}
 
-	*new {|volume = 0.25, delay = 2, randTime = 0.0, reload = false|
-		^super.new.wiresInit(volume, delay, randTime, reload);
+	*new {|volume = 0.25, delay = 2, randTime = 0.0|
+		^super.new.wiresInit(volume, delay, randTime);
 	}
 
-	wiresInit {|volume, dt, rt, reload|
+	wiresInit {|volume, dt, rt|
 		delay = dt;
 		randTime = rt;
 		renew = Routine {
 			setupLock.wait;
 			Server.default.bootSync;
-			Wires_Def.setup(reload, volume);
+			Wires_Def.setup(volume);
 			Server.default.sync;
 			setupLock.signal;
 			root = Wires_Node.out;
@@ -37,15 +37,14 @@ Wires {
 		instances.add(this);
 	}
 
-	*multi {|num = 0, volume = 0.25, reload = false|
-		// Server.default.options.maxNodes = max(Server.default.options.maxNodes, 256 * num);
+	*multi {|num = 0, volume = 0.25|
 		Routine {
 			setupLock.wait;
 			Server.default.bootSync;
-			Wires_Def.setup(reload, volume);
+			Wires_Def.setup(volume);
 			Server.default.sync;
 			setupLock.signal;
-			num.do { this.new(randTime: 1.0, reload: false); 1.wait; };
+			num.do { this.new(randTime: 1.0); 1.wait; };
 		}.play;
 	}
 

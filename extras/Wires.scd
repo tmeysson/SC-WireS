@@ -32,9 +32,9 @@ r = Routine {
 r.stop; g.release;
 
 // idem par l'interface
-w = Wires(reload: true);
+w = Wires();
 w.stop;
 
 // ensemble de graphes
-Wires.multi(5, reload: false);
+Wires.multi(5);
 Wires.stopAll;
