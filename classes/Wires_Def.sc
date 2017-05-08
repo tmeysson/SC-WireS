@@ -29,6 +29,7 @@ Wires_Def {
 		volume = vol;
 		this.readLib;
 		if (libUpdate) {
+			this.removeDefs;
 			this.makeDefs;
 			this.makeWeights;
 			this.addDefs;
@@ -119,7 +120,16 @@ Wires_Def {
 		transDefs.do(_.add);
 	}
 
+	*removeDefs {
+		// supprimer les définitions
+		defs.do(_.do(_.remove));
+		outDef.remove;
+		transDefs.do {|def| SynthDef.removeAt(def.name)};
+	}
+
 	add { synthDef.add }
+
+	remove { SynthDef.removeAt(synthDef.name) }
 
 	// compiler les poids
 	*makeWeights {|start = 1.5, factor = (2/3), nblvls = 3|
