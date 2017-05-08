@@ -40,7 +40,10 @@
 				// distorsion
 				[{|sig, amt| sig ** (2 ** (amt * 2))}, [[lvl], (0..lvl)]],
 				// quantification
-				[{|sig, amt| sig.round(mult.(amt).reciprocal)}, [[lvl], (0..lvl)]]
+				[{|sig, amt| sig.round(mult.(amt).reciprocal)}, [[lvl], (0..lvl)]],
+				// modulation en anneau
+				[{|sig, mod, amt| var a = gain.(amt); (sig * (1 + (mod * a))) / (1 + a)},
+					[lvl]!2 ++ [(0..lvl)]]
 			] ++
 			// clip et fold
 			[\clip2, \fold2].collect {|op| [{|sig, amt| (sig * mult.(amt)).perform(op)},
