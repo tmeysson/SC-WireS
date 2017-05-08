@@ -100,7 +100,8 @@ Wires_Node {
 	}
 
 	renew {|num|
-		var select = subNodes.minItem {|it| it[1].date};
+		var index = subNodes.minIndex {|it| it[1].date};
+		var select = subNodes[index];
 		var node = select[1];
 		if (node.numNodes <= num)
 		// remplacer le noeud
@@ -115,7 +116,7 @@ Wires_Node {
 				synth.set(select[0], bus);
 				1.wait;
 				synth.set(select[0], new.outBus);
-				select[1] = new;
+				subNodes[index][1] = new;
 				numNodes = numNodes - node.numNodes + new.numNodes;
 				node.free; bus.free;
 			}.play;
