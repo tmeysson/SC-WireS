@@ -6,7 +6,7 @@ Wires_Def {
 	// les définitions
 	classvar defs;
 	// la définition du module de sortie
-	classvar <outDef, volume;
+	classvar <outDef;
 	// les poids
 	classvar weights;
 	// le nombre de niveaux par cible d'espérance
@@ -25,8 +25,7 @@ Wires_Def {
 		libUpdate = false;
 	}
 
-	*setup {|vol = 0.25|
-		volume = vol;
+	*setup {
 		this.readLib;
 		if (libUpdate) {
 			this.removeDefs;
@@ -210,8 +209,8 @@ Wires_Def {
 	}
 
 	outDefInit {
-		synthDef = SynthDef('wires-out', {|in, pos, gate = 1|
-			Out.ar(0, Pan2.ar(volume * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(in),
+		synthDef = SynthDef('wires-out', {|vol = 0.25, in, pos, gate = 1|
+			Out.ar(0, Pan2.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(in),
 				In.kr(pos)))
 		});
 		synthArgs = ['audio', 'control'];

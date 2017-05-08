@@ -68,11 +68,11 @@ Wires_Node {
 		synth.onFree {outBus.free};
 	}
 
-	*out {
-		^super.new.outNodeInit;
+	*out {|volume = 0.25|
+		^super.new.outNodeInit(volume);
 	}
 
-	outNodeInit {
+	outNodeInit {|volume|
 		// date
 		date = Date.getDate.rawSeconds;
 		// profondeur
@@ -86,7 +86,7 @@ Wires_Node {
 			[pos: Wires_Node('control', 0, subGroup)]];
 		numNodes = subNodes.sum {|e| e[1].numNodes } + 1;
 		// créer le Synth
-		synth = Wires_Def.outDef.makeInstance(
+		synth = Wires_Def.outDef.makeInstance([vol: volume] ++
 			subNodes.collect {|p| [p[0], p[1].outBus]}.reduce('++'),
 			group);
 		// libérer le groupe à la fin
