@@ -23,11 +23,12 @@ Wires {
 		delay = dt;
 		randTime = rt;
 		renew = Routine {
-			setupLock.wait;
-			Server.default.bootSync;
-			Wires_Def.setup;
-			Server.default.sync;
-			setupLock.signal;
+			protect {
+				setupLock.wait;
+				Server.default.bootSync;
+				Wires_Def.setup;
+				Server.default.sync;
+			} {setupLock.signal};
 			root = Wires_Node.out(volume);
 			{
 				(delay * (2 ** rand2(randTime))).wait;
@@ -39,11 +40,6 @@ Wires {
 
 	*multi {|num = 0, volume = 0.25|
 		Routine {
-			setupLock.wait;
-			Server.default.bootSync;
-			Wires_Def.setup;
-			Server.default.sync;
-			setupLock.signal;
 			num.do { this.new(volume: volume, randTime: 1.0); 1.wait; };
 		}.play;
 	}
