@@ -31,7 +31,7 @@
 				[SinOsc, LFSaw, LFPulse, LFTri, LFNoise0, LFNoise1].collect {|class|
 					[{|amp, freq|
 						gain.(amp) * class.perform(rate, freqRange[rate].(freq));
-					}, (0..lvl+1)!2]
+					}, [(0..1), (0..lvl+1)]]
 			})}
 		),
 
