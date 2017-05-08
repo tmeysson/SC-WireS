@@ -31,8 +31,8 @@ Wires {
 			} {setupLock.signal};
 			root = Wires_Node.out(volume, typeWeights);
 			{
-				(delay * (2 ** rand2(randTime))).wait;
-				root.renew((rand(1.0)/* ** 2*/) * (root.numNodes - 1) + 1);
+				(delay * (2 ** rand(randTime))).wait;
+				root.renew(2 ** rand(log2(root.numNodes) / 0.95));
 			}.loop;
 		}.play;
 		instances.add(this);
