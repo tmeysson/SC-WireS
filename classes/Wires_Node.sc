@@ -106,20 +106,20 @@ Wires_Node {
 		if (node.numNodes <= num)
 		// remplacer le noeud
 		{
+			var rate = node.outBus.rate;
+			var new = Wires_Node(rate, depth + 1, subGroup, typeWeights);
 			// effectuer la transition
 			Routine {
-				var rate = node.outBus.rate;
-				var new = Wires_Node(rate, depth + 1, subGroup, typeWeights);
 				var bus = Bus.alloc;
 				var trans = Synth("wires-trans-%".format(rate).asSymbol,
 					[out: bus, in1: node.outBus, in2: new.outBus], synth, 'addBefore');
 				synth.set(select[0], bus);
 				1.wait;
 				synth.set(select[0], new.outBus);
-				subNodes[index][1] = new;
-				numNodes = numNodes - node.numNodes + new.numNodes;
 				node.free; bus.free;
 			}.play;
+			subNodes[index][1] = new;
+			numNodes = numNodes - node.numNodes + new.numNodes;
 		}
 		// propager la requête
 		{
