@@ -99,16 +99,18 @@ Wires_Def {
 		.do {|def| defs[def.rate].add(def) };
 
 		// définition du module de sortie
-		outDef = this.out;
+		if (outDef.isNil) {outDef = this.out};
 
 		// définition de la transition
-		transDefs = ['audio', 'control'].collect {|it|
-			var rate = switch(it) {'audio'} {\ar} {'control'} {\kr};
-			SynthDef("wires-trans-%".format(it).asSymbol, {|out, in1, in2|
-				var env = Line.kr(doneAction: 2);
-				Out.perform(rate, out, ((1 - env) * In.perform(rate, in1)) +
-					(env * In.perform(rate, in2)));
-			})
+		if (transDefs.isNil) {
+			transDefs = ['audio', 'control'].collect {|it|
+				var rate = switch(it) {'audio'} {\ar} {'control'} {\kr};
+				SynthDef("wires-trans-%".format(it).asSymbol, {|out, in1, in2|
+					var env = Line.kr(doneAction: 2);
+					Out.perform(rate, out, ((1 - env) * In.perform(rate, in1)) +
+						(env * In.perform(rate, in2)));
+				})
+			}
 		};
 	}
 
