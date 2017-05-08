@@ -28,15 +28,6 @@
 				}, (0..lvl+1)!2]
 		}}.collect(normalizeWeight.(_))/*.reduce('++') ++*/,
 
-		/*
-		// BRUIT FILTRE
-		[WhiteNoise, PinkNoise, BrownNoise].collect {|class|
-		[\kr, \ar].collect {|rate, lvl|
-		[{|amp, freq, q| gain.(amp) * BPF.perform(rate, class.perform(rate),
-		freqRange[rate].(freq), mult.(q).reciprocal)}, (0..1)!3]
-		}}.reduce('++') ++
-		*/
-
 		// OPERATEURS ARITHMETIQUES
 		// moyenne
 		(1..2).collect {|lvl|
