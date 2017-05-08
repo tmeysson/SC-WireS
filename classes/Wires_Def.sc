@@ -38,8 +38,8 @@ Wires_Def {
 
 	// récupérer le contenu de la bibliothèque
 	*readLib {|version = "0-1"|
-		var fileName = Platform.userExtensionDir +/+ "SC-WireS" +/+ "library" +/+
-				"Wires_lib_%.scd".format(version);
+		var libName = "Wires_lib_%.scd".format(version);
+		var fileName = Platform.userExtensionDir +/+ "SC-WireS" +/+ "library" +/+ libName;
 		var fileDate = if (File.exists(fileName)) {File.mtime(fileName)}
 		{ Error("Library file % does not exist".format(fileName)).throw };
 		if (((libDate ? 0) < fileDate) || (libVersion != version))
@@ -47,6 +47,7 @@ Wires_Def {
 			var src = File(fileName, "r");
 			libContent = src.readAllString.interpret;
 			src.close;
+			"Loaded %".format(libName).postln;
 			libVersion = version;
 			libDate = Date.getDate.rawSeconds;
 			libUpdate = true;
