@@ -11,16 +11,18 @@ Wires_Node {
 	var <outBus;
 	// la profondeur
 	var depth;
+	// le poids des types
+	var typeWeights;
 	// le nombre de noeuds du sous-graphe
 	var <numNodes;
 	// la date de création
 	var <date;
 
-	*new {|rate = 'audio', depth = 0, target|
-		^super.new.nodeInit(rate, depth, target);
+	*new {|rate = 'audio', depth = 0, target, typeWeights|
+		^super.new.nodeInit(rate, depth, target, typeWeights);
 	}
 
-	nodeInit {|rate, dpth, target|
+	nodeInit {|rate, dpth, target, tWghts|
 		// la définition
 		var def;
 		// les arguments
@@ -29,8 +31,10 @@ Wires_Node {
 		date = Date.getDate.rawSeconds;
 		// profondeur
 		depth = dpth;
+		// poids des types
+		typeWeights = tWghts;
 		// obtenir une définition aléatoire
-		def = Wires_Def.randDef(rate, dpth);
+		def = Wires_Def.randDef(rate, dpth, typeWeights);
 		// créer le Bus de sortie
 		outBus = Bus.alloc(rate);
 		// créer les arguments
@@ -68,22 +72,24 @@ Wires_Node {
 		synth.onFree {outBus.free};
 	}
 
-	*out {|volume = 0.25|
-		^super.new.outNodeInit(volume);
+	*out {|volume = 0.25, typeWeights|
+		^super.new.outNodeInit(volume, typeWeights);
 	}
 
-	outNodeInit {|volume|
+	outNodeInit {|volume, tWghts|
 		// date
 		date = Date.getDate.rawSeconds;
 		// profondeur
 		depth = -1;
+		// poids des types
+		typeWeights = tWghts;
 		// créer le groupe d'accueil
 		group = Group();
 		// créer le sous-groupe
 		subGroup = ParGroup(group);
 		// créer l'entrée
-		subNodes = [[in: Wires_Node('audio', 0, subGroup)],
-			[pos: Wires_Node('control', 0, subGroup)]];
+		subNodes = [[in: Wires_Node('audio', 0, subGroup, typeWeights)],
+			[pos: Wires_Node('control', 0, subGroup, typeWeights)]];
 		numNodes = subNodes.sum {|e| e[1].numNodes } + 1;
 		// créer le Synth
 		synth = Wires_Def.outDef.makeInstance([vol: volume] ++
@@ -102,7 +108,7 @@ Wires_Node {
 			// effectuer la transition
 			Routine {
 				var rate = node.outBus.rate;
-				var new = Wires_Node(rate, depth + 1, subGroup);
+				var new = Wires_Node(rate, depth + 1, subGroup, typeWeights);
 				var bus = Bus.alloc;
 				var trans = Synth("wires-trans-%".format(rate).asSymbol,
 					[out: bus, in1: node.outBus, in2: new.outBus], synth, 'addBefore');

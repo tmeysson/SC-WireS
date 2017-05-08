@@ -11,6 +11,8 @@ Wires_Def {
 	classvar weights;
 	// le nombre de niveaux par cible d'espérance
 	classvar nbLevels;
+	// le nombre de types de modules
+	classvar nbTypes;
 	// les SynthDef de transition
 	classvar transDefs;
 
@@ -87,6 +89,12 @@ Wires_Def {
 				{
 					rec.(def[1..], "%-%".format(prefix, i), def[0] * weight)
 				}
+				// cas d'une fonction de type
+				// note: on peut ajouter des fonctionnalités en utilisant différents symboles
+				{def[0] == \type}
+				{
+					rec.(def[2..], "%-%".format(prefix, i), def[1] * weight)
+				}
 				// cas récursif (par défaut)
 				{ rec.(def, "%-%".format(prefix, i), weight) };
 			}
@@ -94,7 +102,7 @@ Wires_Def {
 			.reduce('++');
 		};
 
-		rec.(libContent, "", 1)
+		rec.(libContent[1..], "", 1)
 		// ajouter dans la liste correspondante
 		.do {|def| defs[def.rate].add(def) };
 
@@ -138,48 +146,72 @@ Wires_Def {
 		var defSpecs = defs.collect(_.collect {|def| [def.nbSons, def.weight]});
 		var sons = defSpecs.collect(_.collect(_[0]));
 		// fonctions de poids
-		var weightFuncs = defSpecs.collect {|specList|
-			var sonsList, weightList;
-			#sonsList, weightList = specList.flop;
-			{|alpha|
-				(weightList * ((sonsList + 1) ** alpha.neg)).normalizeSum
-			}
-		};
+		var weightFuncs;
 
 		// liste des cibles en ordre decroissant
 		var targets = (start * (factor ** (0..2)));
 
-		// initialiser le nombre de niveaux
+		// initialiser le nombre de niveaux par indice
 		nbLevels = nblvls;
+		// initialiser le nombre de types et les fonctions de poids
+		nbTypes = libContent[0];
+		weightFuncs = defSpecs.collect {|specList|
+			var sonsList, weightList;
+			#sonsList, weightList = specList.flop;
+			(0..nbTypes-1).collect {|type|
+				var wList = weightList.collect(_.(type));
+				if (wList.inject(true) {|r,e| r && (e == 0)}) {nil} {
+					{|alpha|
+						(wList * ((sonsList + 1) ** alpha.neg)).normalizeSum
+					}
+				}
+			}
+		};
 		// initialiser les poids
 		weights = Dictionary.new;
 		// on itère sur les types
-		sons.keysValuesDo {|rate, list|
+		['audio', 'control'].do {|rate|
 			// recherche par interpolation
-			var func = weightFuncs[rate];
+			var list = sons[rate];
+			var funcs = weightFuncs[rate];
 			var alpha = 0;
 			var diff;
 			weights[rate] =
 			// pour chaque valeur cible
 			targets.collect {|target|
-				var step = 0.5;
-				// si alpha est trop faible, l'augmenter
-				while { ((list * func.(alpha)).sum - target) > 0 }
-				{ alpha = alpha + 1 };
-				// si alpha est trop fort, le diminuer
-				while { ((list * func.(alpha)).sum - target) < 0 }
-				{ alpha = alpha - 1 };
-				// on se trouve en dessous de la valeur cible, à une distance <= 1
-				// procéder par dichotomie jusqu'à satisfaction
-				while {
-					diff = (list * func.(alpha)).sum - target;
-					diff.abs > 0.01
+				// pour chaque type
+				(0..nbTypes-1).collect {|type|
+					var func = funcs[type];
+					if (func.isNil) {nil} {
+						var step = 0.5;
+						// si alpha est trop faible, l'augmenter
+						while { ((list * func.(alpha)).sum - target) > 0 }
+						{ alpha = alpha + 1 };
+						// si alpha est trop fort, le diminuer
+						while { ((list * func.(alpha)).sum - target) < 0 }
+						{ alpha = alpha - 1 };
+						// on se trouve en dessous de la valeur cible, à une distance <= 1
+						// procéder par dichotomie jusqu'à satisfaction
+						while {
+							diff = (list * func.(alpha)).sum - target;
+							diff.abs > 0.01
+						}
+						{ alpha = alpha + (step * diff.sign); step = step * 0.5; };
+						// retourner la liste de poids
+						func.(alpha);
+					}
 				}
-				{ alpha = alpha + (step * diff.sign); step = step * 0.5; };
-				// retourner la liste de poids
-				func.(alpha);
 			};
 		}
+	}
+
+	*weightStats {
+		weights.do {|rate| rate.do {|target|
+			target.flop.collect {|tab|
+				var avg = tab.sum / tab.size;
+				tab.sum({|v| abs(v-avg)}) / tab.size;
+			}.sum.postln
+		}};
 	}
 
 	*new {|idNum, func, parms, weight|
@@ -218,9 +250,13 @@ Wires_Def {
 		synthArgs = ['audio', 'control'];
 	}
 
-	*randDef {|rate, depth|
+	*randDef {|rate, depth, typeWeights|
+		var types = typeWeights ? (1 ! nbTypes);
+		var mixedWeights = [weights[rate][(depth/nbLevels).floor.clip(0,2)], types].flop
+		.sum {|entry| if (entry[0].notNil) {[entry[0] * entry[1], entry[1]]} {[0,0]} };
+		mixedWeights = mixedWeights[0]/mixedWeights[1];
 		// choisir une définition suivant les poids et la profondeur
-		^defs[rate][weights[rate][(depth/nbLevels).floor.clip(0,2)].windex];
+		^defs[rate][mixedWeights.windex];
 	}
 
 	makeInstance {|args, target|
