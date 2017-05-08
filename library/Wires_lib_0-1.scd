@@ -7,12 +7,15 @@
 	var normalizeWeight = {|list, weight = 1| [weight/list.size, list]};
 	var typeWeight = {|type, list| [\type, {|i| (type == i).asInteger + 0.01}, list]};
 	[
-		// nombre de types
-		4, // constante, séquence, oscillateur, fonction arithmétique
+		// les nombres de types
+		[
+			control: 4, // constante, séquence, oscillateur, fonction arithmétique
+			audio: 2 // oscillateur, fonction arithmétique
+		],
 		// CONSTANTE
-		typeWeight.(0, [{ DC.kr(Rand(-1, 1)) }, []]),
+		typeWeight.(2, [{ DC.kr(Rand(-1, 1)) }, []]),
 		// GENERATEURS DE SEQUENCE
-		typeWeight.(1, normalizeWeight.(
+		typeWeight.(3, normalizeWeight.(
 			([[Dwhite, [-1, 1]]] ++ (1..4).collect {|n|[Dxrand, [(n.neg..n)/n, inf]]} ++
 				(1..4).collect {|n|[Dseq, [((n.neg..n-1)++(n..n.neg+1))/n, inf]]}).collect
 			{|p1| var class1, args1; #class1, args1 = p1;
@@ -26,7 +29,7 @@
 			}}.flat.collect{|f| [f,(0..1)!2]}
 		)),
 		// OSCILLATEURS
-		typeWeight.(2,
+		typeWeight.(0,
 			[\kr, \ar].collect {|rate, lvl| normalizeWeight.(
 				[SinOsc, LFSaw, LFPulse, LFTri, LFNoise0, LFNoise1].collect {|class|
 					[{|amp, freq, fm|
@@ -36,7 +39,7 @@
 		),
 
 		// OPERATEURS ARITHMETIQUES
-		typeWeight.(3,
+		typeWeight.(1,
 			(1..2).collect {|lvl| normalizeWeight.(
 				[
 					// moyenne

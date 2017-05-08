@@ -154,11 +154,11 @@ Wires_Def {
 		// initialiser le nombre de niveaux par indice
 		nbLevels = nblvls;
 		// initialiser le nombre de types et les fonctions de poids
-		nbTypes = libContent[0];
-		weightFuncs = defSpecs.collect {|specList|
+		nbTypes = Dictionary.newFrom(libContent[0]);
+		weightFuncs = defSpecs.copy.keysValuesChange {|rate, specList|
 			var sonsList, weightList;
 			#sonsList, weightList = specList.flop;
-			(0..nbTypes-1).collect {|type|
+			(0..nbTypes[rate]-1).collect {|type|
 				var wList = weightList.collect(_.(type));
 				if (wList.inject(true) {|r,e| r && (e == 0)}) {nil} {
 					{|alpha|
@@ -180,7 +180,7 @@ Wires_Def {
 			// pour chaque valeur cible
 			targets.collect {|target|
 				// pour chaque type
-				(0..nbTypes-1).collect {|type|
+				(0..nbTypes[rate]-1).collect {|type|
 					var func = funcs[type];
 					if (func.isNil) {nil} {
 						var step = 0.5;
@@ -251,7 +251,7 @@ Wires_Def {
 	}
 
 	*randDef {|rate, depth, typeWeights|
-		var types = typeWeights ? (1 ! nbTypes);
+		var types = if (typeWeights.notNil) {typeWeights[..nbTypes[rate]-1]} {1 ! nbTypes[rate]};
 		var mixedWeights = [weights[rate][(depth/nbLevels).floor.clip(0,2)], types].flop
 		.sum {|entry| if (entry[0].notNil) {[entry[0] * entry[1], entry[1]]} {[0,0]} };
 		mixedWeights = mixedWeights[0]/mixedWeights[1];
