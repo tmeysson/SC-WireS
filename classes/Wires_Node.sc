@@ -86,7 +86,8 @@ Wires_Node {
 			[pos: Wires_Node('control', 0, subGroup)]];
 		numNodes = subNodes.sum {|e| e[1].numNodes } + 1;
 		// créer le Synth
-		synth = Wires_Def.outDef.makeInstance(subNodes.do {|p| [p[0], p[1].outBus]}.reduce('++'),
+		synth = Wires_Def.outDef.makeInstance(
+			subNodes.collect {|p| [p[0], p[1].outBus]}.reduce('++'),
 			group);
 		// libérer le groupe à la fin
 		synth.onFree {group.free};
