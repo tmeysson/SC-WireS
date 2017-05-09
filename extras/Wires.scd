@@ -32,7 +32,7 @@ r = Routine {
 r.stop; g.release;
 
 // idem par l'interface
-w = Wires(typeWeights: [1, 1, 1, 1]);
+w = Wires(0 ,typeWeights: [1, 1, 1, 1]);
 w.stop;
 
 // ensemble de graphes
