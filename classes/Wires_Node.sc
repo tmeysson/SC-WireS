@@ -71,8 +71,6 @@ Wires_Node {
 		args = [out: outBus] ++ args;
 		// créer le Synth
 		synth = def.makeInstance(args, group ? target);
-		// libérer le Bus à la fin
-		synth.onFree {outBus.free};
 	}
 
 	*out {|volume = 0.25, typeWeights|
@@ -100,8 +98,8 @@ Wires_Node {
 		synth = Wires_Def.outDef.makeInstance([vol: volume] ++
 			subNodes.collect {|p| [p[0], p[1].outBus]}.reduce('++'),
 			group);
-		// libérer le groupe à la fin
-		synth.onFree {group.free};
+		// libérer le sous-graphe à la fin
+		synth.onFree {this.free};
 	}
 
 	renew {|num|
@@ -115,7 +113,7 @@ Wires_Node {
 			var new = Wires_Node(rate, depth + 1, subGroup, typeWeights);
 			// effectuer la transition
 			Routine {
-				var bus = Bus.alloc;
+				var bus = Bus.alloc(rate);
 				var trans = Synth("wires-trans-%".format(rate).asSymbol,
 					[out: bus, in1: node.outBus, in2: new.outBus], synth, 'addBefore');
 				synth.set(select[0], bus);
@@ -135,7 +133,11 @@ Wires_Node {
 	}
 
 	free {
-		if (group.notNil) {group.free} {synth.free};
+		if (synth.isRunning) {synth.free};
+		if (outBus.notNil) {outBus.free};
+		subNodes.do {|node| node[1].free };
+		if (subGroup.notNil) {subGroup.free};
+		if (group.notNil) {group.free};
 	}
 
 	release {
