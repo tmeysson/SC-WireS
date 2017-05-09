@@ -8,10 +8,10 @@
 	var normalizeWeight = {|list, weight = 1| [weight/list.size, list]};
 	var typeWeight = {|type, list| [\type, {|i| (type == i).asInteger + 0.01}, list]};
 	[
-		// les nombres de types
+		// les numéros de types
 		[
-			control: 4, // constante, séquence, oscillateur, fonction arithmétique
-			audio: 2 // oscillateur, fonction arithmétique
+			control: (0..3), // constante, séquence, oscillateur, fonction arithmétique
+			audio: (0..1) // oscillateur, fonction arithmétique
 		],
 		// CONSTANTE
 		typeWeight.(2, [{ DC.kr(Rand(-1, 1)) }, []]),
