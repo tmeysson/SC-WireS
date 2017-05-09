@@ -36,5 +36,6 @@ w = Wires(0 ,typeWeights: [1, 1, 1, 1]);
 w.stop;
 
 // ensemble de graphes
-Wires.multi(5, typeWeights: [1, 1, 1, 1]);
+Server.supernova;
+Wires.multi(5, 0.1, typeWeights: [1, 1, 1, 1]);
 Wires.stopAll;
