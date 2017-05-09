@@ -1,5 +1,6 @@
 // BIBLIOTHEQUE WIRES V0.1
 {
+	var option = {|val, opt, func| if (opt.notNil) {func.(val)} {val} };
 	var freqRange = Dictionary.newFrom([
 		kr: {|f| 2**(f*4+4)}, ar: {|f| 2**(f*3+9)}]);
 	var gain = {|a| a+1*0.5};
@@ -32,10 +33,13 @@
 		typeWeight.(0,
 			[\kr, \ar].collect {|rate, lvl| normalizeWeight.(
 				[SinOsc, LFSaw, LFPulse, LFTri, LFNoise0, LFNoise1].collect {|class|
-					[{|amp, freq, fm|
-						gain.(amp) * class.perform(rate, freqRange[rate].(freq) * (2 ** fm));
-					}, (0..1)!2 ++ [(0,2..lvl*2)]]
-			})}
+					[nil, [[2]]].collect {|fmParm|
+						[{|amp, freq, fm|
+						gain.(amp) * class.perform(rate,
+								option.(freqRange[rate].(freq), fmParm, {|it| it * (2 ** fm)}));
+						}, (0..1)!2 ++ fmParm]
+					}
+			}.reduce('++'))}
 		),
 
 		// OPERATEURS ARITHMETIQUES
