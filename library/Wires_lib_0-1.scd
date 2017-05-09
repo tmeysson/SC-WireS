@@ -22,8 +22,8 @@
 			.collect {|p1| var class1, args1; #class1, args1 = p1;
 				([[Dwhite, [0.125, 1] * mult.(Rand(-1, 1))]] ++
 					(1..3).collect {|n|[Dxrand, [(0.5**(0..n)) * mult.(Rand(-1, 1)), inf]]} ++
-					(2..4).collect {|n|[Dseq,
-						[({|i|(0.5**i)!(2**i)}!n).reduce('++').scramble * mult.(Rand(-1, 1)), inf]]})
+					(2..4).collect {|n|[Dshuf,
+						[({|i|(0.5**i)!(2**i)}!n).reduce('++') * mult.(Rand(-1, 1)), inf]]})
 				.collect {|p2| var class2, args2; #class2, args2 = p2;
 					{|width| gain.(width) * DemandEnvGen.kr(
 						class1.performList(\new, args1),
