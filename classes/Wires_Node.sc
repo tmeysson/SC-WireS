@@ -20,12 +20,16 @@ Wires_Node {
 	var <numNodes;
 	// la date de création
 	var <date;
+	// le niveau de variable ciblé
+	var varLevel;
 
-	*new {|rate = 'audio', depth = 0, target, typeWeights|
-		^super.new.nodeInit(rate, depth, target, typeWeights);
+	*new {|rate = 'audio', depth = 0, target, varLevel = 0, typeWeights, isVar = false|
+		if (isVar.not && 0.1.coin)
+		{ ^Wires_Var.getVar(rate, depth, target, varLevel, typeWeights) }
+		{ ^super.new.nodeInit(rate, depth, target, varLevel, typeWeights) };
 	}
 
-	nodeInit {|rate, dpth, target, tWghts|
+	nodeInit {|rate, dpth, target, level, tWghts|
 		// la définition
 		var def;
 		// les arguments
@@ -34,6 +38,8 @@ Wires_Node {
 		date = Date.getDate.rawSeconds;
 		// profondeur
 		depth = dpth;
+		// niveau de variable
+		varLevel = level;
 		// poids des types
 		typeWeights = tWghts;
 		// obtenir une définition aléatoire
@@ -54,7 +60,8 @@ Wires_Node {
 			args = args.collect {|item|
 				var i, rate;
 				#i, rate = item;
-				["p%".format(i).asSymbol, Wires_Node(rate, depth + 1, subGroup)]
+				["p%".format(i).asSymbol,
+					Wires_Node(rate, depth + 1, subGroup, varLevel, typeWeights)]
 			};
 			// enregistrer les sous-noeuds
 			subNodes = args;
@@ -82,6 +89,8 @@ Wires_Node {
 		date = Date.getDate.rawSeconds;
 		// profondeur
 		depth = -1;
+		// niveau de variable
+		varLevel = 0;
 		// poids des types
 		typeWeights = tWghts;
 		// créer le groupe de base, si il n'existe pas
@@ -91,8 +100,8 @@ Wires_Node {
 		// créer le sous-groupe
 		subGroup = ParGroup(group);
 		// créer l'entrée
-		subNodes = [[in: Wires_Node('audio', 0, subGroup, typeWeights)],
-			[pos: Wires_Node('control', 0, subGroup, typeWeights)]];
+		subNodes = [[in: Wires_Node('audio', 0, subGroup, 0, typeWeights)],
+			[pos: Wires_Node('control', 0, subGroup, 0, typeWeights)]];
 		numNodes = subNodes.sum {|e| e[1].numNodes } + 1;
 		// créer le Synth
 		synth = Wires_Def.outDef.makeInstance([vol: volume] ++
@@ -110,7 +119,7 @@ Wires_Node {
 		// remplacer le noeud
 		{
 			var rate = node.outBus.rate;
-			var new = Wires_Node(rate, depth + 1, subGroup, typeWeights);
+			var new = Wires_Node(rate, depth + 1, subGroup, varLevel, typeWeights);
 			// effectuer la transition
 			Routine {
 				var bus = Bus.alloc(rate);
