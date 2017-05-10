@@ -32,10 +32,13 @@ r = Routine {
 r.stop; g.release;
 
 // idem par l'interface
-w = Wires(0 ,typeWeights: [1, 1, 1, 1]);
+w = Wires(0 ,typeWeights: [1, 1, 1, 1], debug: true);
 w.stop;
 
-// ensemble de graphes
+Server.program;
 Server.supernova;
-Wires.multi(5, 0.1, typeWeights: [1, 1, 1, 1]);
+Server.scsynth;
+
+// ensemble de graphes
+Wires.multi(5, 0.075, typeWeights: [1, 1, 1, 1]);
 Wires.stopAll;

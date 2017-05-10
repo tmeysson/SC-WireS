@@ -15,11 +15,11 @@ Wires {
 		setupLock = Semaphore();
 	}
 
-	*new {|volume = 0.25, typeWeights, delay = 2, randTime = 0.0|
-		^super.new.wiresInit(volume, typeWeights, delay, randTime);
+	*new {|volume = 0.25, typeWeights, delay = 2, randTime = 0.0, debug = false|
+		^super.new.wiresInit(volume, typeWeights, delay, randTime, debug);
 	}
 
-	wiresInit {|volume, typeWeights, dt, rt|
+	wiresInit {|volume, typeWeights, dt, rt, debug|
 		delay = dt;
 		randTime = rt;
 		renew = Routine {
@@ -31,8 +31,17 @@ Wires {
 			} {setupLock.signal};
 			root = Wires_Node.out(volume, typeWeights);
 			{
-				(delay * (2 ** rand(randTime))).wait;
+				var numSynths = Server.default.numSynths;
+				var numNodes = root.numNodes;
+				if (numNodes != numSynths) {root.countNodes(update: true)};
+				if (debug) {
+					"Busses: %, Synths: %, NumNodes: % -> %"
+					.format(Server.default.audioBusAllocator.blocks.size +
+						Server.default.controlBusAllocator.blocks.size,
+						numSynths, numNodes.round(0.01), root.numNodes).postln;
+				};
 				root.renew(2 ** rand(log2(root.numNodes) / 0.95));
+				(delay * (2 ** rand(randTime))).wait;
 			}.loop;
 		}.play;
 		instances.add(this);
