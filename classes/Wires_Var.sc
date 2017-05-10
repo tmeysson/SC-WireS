@@ -31,7 +31,7 @@ Wires_Var : Wires_Node {
 		}
 		// si le niveau n'existe pas, le créer
 		{
-			lvlGroups.add(ParGroup());
+			lvlGroups.add(ParGroup(lvlGroups[varLevel-1] ? baseGroup, 'addAfter'));
 			levels.add(Dictionary.newFrom([audio: List(), control: List()]));
 			// créer une variable et la retourner
 			^this.new(rate, depth, target, varLevel, typeWeights);
@@ -55,22 +55,20 @@ Wires_Var : Wires_Node {
 
 	free {
 		this.decRefs;
+		// si il n'y a plus de références
 		if (refs == 0)
 		{
-			var level = levels[varLevel-1];
-			level[outBus.rate].remove(this);
 			// supprimer le noeud
 			super.free;
+			levels[varLevel-1][outBus.rate].remove(this);
 			// si le niveau est vide, le supprimer
-			if (level.sum(_.size) == 0)
+			if (levels[varLevel-1].sum(_.size) == 0)
 			{
 				levels.pop;
 				lvlGroups[varLevel-1].free;
 				lvlGroups.pop;
 			}
-			^this;
-		}
+		};
 		// sinon, ne rien faire
-		{ ^this };
 	}
 }

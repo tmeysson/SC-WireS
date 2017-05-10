@@ -3,8 +3,9 @@
 	var option = {|val, opt, func| if (opt.notNil) {func.(val)} {val} };
 	var freqRange = Dictionary.newFrom([
 		kr: {|f| 2**(f*4+4)}, ar: {|f| 2**(f*3+9)}]);
-	var gain = {|a| a+1*0.5};
-	var mult = {|a| 2**(gain.(a)*3)};
+	var positive = {|a| a+1*0.5};
+	var mult = {|a| 2**(positive.(a)*3)};
+	var gain = {|a| 0.33 ** positive.(a)};
 	var normalizeWeight = {|list, weight = 1| [weight/list.size, list]};
 	var typeWeight = {|type, list| [\type, {|i| (type == i).asInteger + 0.01}, list]};
 	[
@@ -36,7 +37,7 @@
 				[SinOsc, LFSaw, LFPulse, LFTri, LFNoise0, LFNoise1].collect {|class|
 					[nil, [[2]]].collect {|fmParm|
 						[{|amp, freq, fm|
-						gain.(amp) * class.perform(rate,
+							gain.(amp) * class.perform(rate,
 								option.(freqRange[rate].(freq), fmParm, {|it| it * (2 ** fm)}));
 						}, (0..1)!2 ++ fmParm]
 					}
@@ -50,7 +51,7 @@
 					// moyenne
 					[{|a, b| (a + b) * 0.5}, [lvl]!2],
 					// melange
-					[{|a, b, mix| var pos = gain.(mix); (a * (1-pos)) + (b * pos)},
+					[{|a, b, mix| var pos = positive.(mix); (a * (1-pos)) + (b * pos)},
 						[lvl]!2 ++ [(0..1)]],
 					// produit
 					[{|a,b| a*b}, [[lvl], (1..lvl)]],
