@@ -32,8 +32,8 @@ Wires_Var : Wires_Node {
 		// si le niveau n'existe pas, le créer
 		{
 			if (lvlGroups.size > varLevel)
-			{lvlGroups[varLevel] = ParGroup(baseGroup)}
-			{lvlGroups.add(ParGroup(baseGroup))};
+			{lvlGroups[varLevel] = ParGroup(lvlGroups[varLevel-1] ? baseGroup, 'addAfter')}
+			{lvlGroups.add(ParGroup(lvlGroups[varLevel-1] ? baseGroup, 'addAfter'))};
 			if (levels.size > varLevel)
 			{levels[varLevel] = Dictionary.newFrom([audio: List(), control: List()])}
 			{levels.add(Dictionary.newFrom([audio: List(), control: List()]))};
