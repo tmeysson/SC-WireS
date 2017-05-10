@@ -113,7 +113,7 @@ Wires_Node {
 	}
 
 	renew {|num|
-		var index = subNodes.minIndex {|it| it[1].date};
+		var index = subNodes.minIndex {|it| it[1].date + rand(1.0)};
 		var select = subNodes[index];
 		var node = select[1];
 		if (node.numNodes <= num)
