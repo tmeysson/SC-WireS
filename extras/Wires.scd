@@ -32,7 +32,7 @@ r = Routine {
 r.stop; g.release;
 
 // idem par l'interface
-w = Wires(0 ,typeWeights: [1, 1, 1, 1]);
+w = Wires(0 ,typeWeights: [1, 1, 1, 1], debug: true);
 w.stop;
 
 Server.program;

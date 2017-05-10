@@ -31,15 +31,17 @@ Wires {
 			} {setupLock.signal};
 			root = Wires_Node.out(volume, typeWeights);
 			{
-				(delay * (2 ** rand(randTime))).wait;
-				root.renew(2 ** rand(log2(root.numNodes) / 0.95));
+				var numSynths = Server.default.numSynths;
+				var numNodes = root.numNodes;
+				if (numNodes != numSynths) {root.countNodes(update: true)};
 				if (debug) {
-					"%, %, %, %".format(Server.default.audioBusAllocator.blocks.size +
+					"Busses: %, Synths: %, NumNodes: % -> %"
+					.format(Server.default.audioBusAllocator.blocks.size +
 						Server.default.controlBusAllocator.blocks.size,
-						Server.default.numSynths,
-						root.numNodes,
-						root.countNodes).postln;
-				}
+						numSynths, numNodes.round(0.01), root.numNodes).postln;
+				};
+				root.renew(2 ** rand(log2(root.numNodes) / 0.95));
+				(delay * (2 ** rand(randTime))).wait;
 			}.loop;
 		}.play;
 		instances.add(this);

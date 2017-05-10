@@ -157,7 +157,9 @@ Wires_Node {
 		synth.release;
 	}
 
-	countNodes {
-		^subNodes.sum {|n| n[1].countNodes} + 1;
+	countNodes {|coeff = 1, update = false|
+		var count = subNodes.sum {|n| n[1].countNodes(coeff, update)} + coeff;
+		if (update) {numNodes = count};
+		^count;
 	}
 }

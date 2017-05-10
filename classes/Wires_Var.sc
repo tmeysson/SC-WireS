@@ -71,4 +71,10 @@ Wires_Var : Wires_Node {
 		};
 		// sinon, ne rien faire
 	}
+
+	countNodes {|coeff = 1, update = false|
+		// obtenir le bon nombre de noeuds
+		// en prenant en compte les références multiples
+		^super.countNodes(coeff/refs, update);
+	}
 }
