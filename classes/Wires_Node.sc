@@ -3,7 +3,7 @@ Wires_Node {
 	classvar baseGroup;
 
 	// le Synth et son état
-	var synth, isRunning;
+	var synth;
 	// les sous-noeuds
 	var subNodes;
 	// le Group
@@ -78,7 +78,7 @@ Wires_Node {
 		args = [out: outBus] ++ args;
 		// créer le Synth
 		synth = def.makeInstance(args, group ? target);
-		isRunning = true;
+		synth.onFree {outBus.free; this.freeVars};
 	}
 
 	*out {|volume = 0.25, typeWeights|
@@ -108,9 +108,8 @@ Wires_Node {
 		synth = Wires_Def.outDef.makeInstance([vol: volume] ++
 			subNodes.collect {|p| [p[0], p[1].outBus]}.reduce('++'),
 			group);
-		isRunning = true;
 		// libérer le sous-graphe à la fin
-		synth.onFree {isRunning = false; this.free};
+		synth.onFree {this.freeVars; this.free};
 	}
 
 	renew {|num|
@@ -144,14 +143,19 @@ Wires_Node {
 	}
 
 	free {
-		if (isRunning) {synth.free; isRunning = false};
-		if (outBus.notNil) {outBus.free};
-		subNodes.do {|node| node[1].free };
-		if (subGroup.notNil) {subGroup.free};
-		if (group.notNil) {group.free};
+
+		if (group.notNil) {group.free} {synth.free};
+	}
+
+	freeVars {
+		subNodes.do {|node| if (node[1].isKindOf(Wires_Var)) {node[1].free} };
 	}
 
 	release {
 		synth.release;
+	}
+
+	countNodes {
+		^subNodes.sum {|n| n[1].countNodes} + 1;
 	}
 }
