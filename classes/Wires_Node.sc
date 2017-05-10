@@ -109,7 +109,8 @@ Wires_Node {
 			subNodes.collect {|p| [p[0], p[1].outBus]}.reduce('++'),
 			group);
 		// libérer le sous-graphe à la fin
-		synth.onFree {this.freeVars; this.free};
+		synth.onFree {isRunning = false; this.free};
+		isRunning = true;
 	}
 
 	renew {|num|
