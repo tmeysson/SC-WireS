@@ -113,9 +113,11 @@ Wires_Node {
 	}
 
 	renew {|num|
-		var index = subNodes.minIndex {|it| it[1].date + rand(1.0)};
-		var select = subNodes[index];
-		var node = select[1];
+		var index, select, node;
+		if (num < 1) {num = 1};
+		index = subNodes.minIndex {|it| it[1].date + rand(1.0)};
+		select = subNodes[index];
+		node = select[1];
 		if (node.numNodes <= num)
 		// remplacer le noeud
 		{
@@ -143,7 +145,6 @@ Wires_Node {
 	}
 
 	free {
-
 		if (group.notNil) {group.free} {synth.free};
 	}
 
