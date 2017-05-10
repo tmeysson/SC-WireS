@@ -14,7 +14,7 @@ Wires_Var : Wires_Node {
 
 	*getVar {|rate = 'audio', depth = 0, target, varLevel, typeWeights|
 		// si le niveau existe
-		if (levels[varLevel].notNil) {
+		if (varLevel < levels.size) {
 			var level = levels[varLevel][rate];
 			// si on doit créer une nouvelle variable
 			if((level.size + 1).reciprocal.coin) {
@@ -31,12 +31,8 @@ Wires_Var : Wires_Node {
 		}
 		// si le niveau n'existe pas, le créer
 		{
-			if (lvlGroups.size > varLevel)
-			{lvlGroups[varLevel] = ParGroup(lvlGroups[varLevel-1] ? baseGroup, 'addAfter')}
-			{lvlGroups.add(ParGroup(lvlGroups[varLevel-1] ? baseGroup, 'addAfter'))};
-			if (levels.size > varLevel)
-			{levels[varLevel] = Dictionary.newFrom([audio: List(), control: List()])}
-			{levels.add(Dictionary.newFrom([audio: List(), control: List()]))};
+			lvlGroups.add(ParGroup());
+			levels.add(Dictionary.newFrom([audio: List(), control: List()]));
 			// créer une variable et la retourner
 			^this.new(rate, depth, target, varLevel, typeWeights);
 		}
@@ -59,20 +55,22 @@ Wires_Var : Wires_Node {
 
 	free {
 		this.decRefs;
-		// si il n'y a plus de références
 		if (refs == 0)
 		{
+			var level = levels[varLevel-1];
+			level[outBus.rate].remove(this);
 			// supprimer le noeud
 			super.free;
-			levels[varLevel-1][outBus.rate].remove(this);
 			// si le niveau est vide, le supprimer
-			if (levels[varLevel-1].sum(_.size) == 0)
+			if (level.sum(_.size) == 0)
 			{
-				levels[varLevel-1] = nil;
+				levels.pop;
 				lvlGroups[varLevel-1].free;
-				lvlGroups[varLevel-1] = nil;
+				lvlGroups.pop;
 			}
-		};
+			^this;
+		}
 		// sinon, ne rien faire
+		{ ^this };
 	}
 }

@@ -33,13 +33,6 @@ Wires {
 			{
 				(delay * (2 ** rand(randTime))).wait;
 				root.renew(2 ** rand(log2(root.numNodes) / 0.95));
-/*
-				"%, %, %, %".format(Server.default.audioBusAllocator.blocks.size +
-				Server.default.controlBusAllocator.blocks.size,
-				Server.default.numSynths,
-				root.numNodes,
-				root.countNodes).postln;
-*/
 			}.loop;
 		}.play;
 		instances.add(this);
