@@ -61,11 +61,11 @@
 					[{|sig, amt| sig.round(mult.(amt).reciprocal)}, [[lvl], (0..lvl)]],
 					// modulation en anneau
 					[{|sig, mod, amt| var a = gain.(amt); (sig * (1 + (mod * a))) / (1 + a)},
-						[lvl]!2 ++ [(0..lvl)]]
+						[lvl]!2 ++ [(0..1)]]
 				] ++
 				// clip et fold
 				[\clip2, \fold2].collect {|op| [{|sig, amt| (sig * mult.(amt)).perform(op)},
-					[[lvl], (0..lvl)]]})
+					[[lvl], (0..1)]]})
 			}
 		)
 	]
