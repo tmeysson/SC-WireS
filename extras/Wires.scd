@@ -40,5 +40,5 @@ Server.supernova;
 Server.scsynth;
 
 // ensemble de graphes
-Wires.multi(5, 0.075, typeWeights: [1, 1, 1, 1]);
+Wires.multi(5, 0.075, typeWeights: [1, 1, 1, 1], debug: true);
 Wires.stopAll;
