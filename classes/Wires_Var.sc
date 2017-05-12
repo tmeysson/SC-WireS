@@ -12,20 +12,20 @@ Wires_Var : Wires_Node {
 		lvlGroups = List();
 	}
 
-	*getVar {|rate = 'audio', depth = 0, target, varLevel, typeWeights|
+	*getVar {|rate = 'audio', depth = 0, target, varLevel, typeWeights, parent, quota|
 		// si le niveau existe
 		if (varLevel < levels.size) {
 			var level = levels[varLevel][rate];
 			// si on doit créer une nouvelle variable
 			if((level.size + 1).reciprocal.coin) {
 				// créer un noeud
-				^this.new(rate, depth, target, varLevel, typeWeights);
+				^this.new(rate, depth, target, varLevel, typeWeights, parent, quota);
 			}
 			// sinon, retourner une variable existante
 			{
 				var select = level.choose;
 				// incrémenter son compteur de références
-				select.incRefs;
+				select.incRefs(parent, quota);
 				^select;
 			}
 		}
@@ -34,27 +34,45 @@ Wires_Var : Wires_Node {
 			lvlGroups.add(ParGroup(lvlGroups[varLevel-1] ? baseGroup, 'addAfter'));
 			levels.add(Dictionary.newFrom([audio: List(), control: List()]));
 			// créer une variable et la retourner
-			^this.new(rate, depth, target, varLevel, typeWeights);
+			^this.new(rate, depth, target, varLevel, typeWeights, parent, quota);
 		}
 	}
 
-	*new {|rate = 'audio', depth = 0, target, varLevel, typeWeights|
-		^super.new(rate, depth, lvlGroups[varLevel], varLevel+1, typeWeights, true).varInit;
+	*new {|rate = 'audio', depth = 0, target, varLevel, typeWeights, parent, quota|
+		^super.new(rate, depth, lvlGroups[varLevel], varLevel+1, typeWeights,
+			parent, quota, true).varInit(parent, quota);
 	}
 
-	varInit {
+	varInit {|parent, qt|
 		// initialiser le compteur de références
 		refs = 1;
 		// ajouter dans les variables
 		levels[varLevel-1][outBus.rate].add(this);
+		// enregistrer le quota initial
+		quota = Dictionary().put(parent, qt);
 	}
 
-	incRefs { refs = refs + 1 }
+	quota {|parent|
+		// ^quota.values.reduce('max');
+		^quota[parent];
+	}
 
-	decRefs { refs = refs - 1 }
+	incRefs {|parent, qt|
+		// augmenter le nombre de références
+		refs = refs + 1;
+		// enregistrer le quota
+		quota.put(parent, qt);
+	}
 
-	free {
-		this.decRefs;
+	decRefs {|parent|
+		// décrémenter le nombre de références
+		refs = refs - 1;
+		// supprimer le quota
+		quota.removeAt(parent);
+	}
+
+	free {|parent|
+		this.decRefs(parent);
 		// si il n'y a plus de références
 		if (refs == 0)
 		{

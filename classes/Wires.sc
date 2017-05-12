@@ -6,7 +6,7 @@ Wires {
 	classvar setupLock;
 
 	// la racine du graphe
-	var root;
+	var <root;
 	// la Routine de renouvellement
 	var renew, delay, randTime;
 
@@ -29,27 +29,34 @@ Wires {
 				Wires_Def.setup;
 				Server.default.sync;
 			} {setupLock.signal};
-			root = Wires_Node.out(volume, typeWeights);
+			root = Wires_Node.out(volume, typeWeights, [40, 10]);
+			instances.add(this);
 			{
-				var numSynths = Server.default.numSynths;
-				var numNodes = root.numNodes;
+				/*
+				// ne fonctionne pas avec plusieurs Wires en parallèle
 				if (numNodes != numSynths) {root.countNodes(update: true)};
+				*/
+				root.countNodes(update: true);
 				if (debug) {
-					"Busses: %, Synths: %, NumNodes: % -> %"
+					var numSynths = Server.default.numSynths;
+					var numNodes = instances.sum{|elt| elt.root.numNodes};
+					"Busses: %, Synths: %, NumNodes: %"
 					.format(Server.default.audioBusAllocator.blocks.size +
 						Server.default.controlBusAllocator.blocks.size,
-						numSynths, numNodes.round(0.01), root.numNodes).postln;
+						numSynths, numNodes.round(0.01)).postln;
 				};
 				root.renew(2 ** rand(log2(root.numNodes) / 0.95));
 				(delay * (2 ** rand(randTime))).wait;
 			}.loop;
 		}.play;
-		instances.add(this);
 	}
 
-	*multi {|num = 0, volume = 0.25, typeWeights|
+	*multi {|num = 0, volume = 0.25, typeWeights, debug = false|
 		Routine {
-			num.do { this.new(volume: volume, typeWeights: typeWeights, randTime: 1.0); 1.wait; };
+			num.do {
+				this.new(volume: volume, typeWeights: typeWeights, randTime: 1.0, debug: debug);
+				debug = false; 1.wait;
+			};
 		}.play;
 	}
 

@@ -16,6 +16,8 @@ Wires_Node {
 	var depth;
 	// le poids des types
 	var typeWeights;
+	// le quota de noeuds
+	var <quota;
 	// le nombre de noeuds du sous-graphe
 	var <numNodes;
 	// la date de création
@@ -23,17 +25,19 @@ Wires_Node {
 	// le niveau de variable ciblé
 	var varLevel;
 
-	*new {|rate = 'audio', depth = 0, target, varLevel = 0, typeWeights, isVar = false|
+	*new {|rate = 'audio', depth = 0, target, varLevel = 0, typeWeights, parent, quota, isVar = false|
 		if (isVar.not && 0.1.coin)
-		{ ^Wires_Var.getVar(rate, depth, target, varLevel, typeWeights) }
-		{ ^super.new.nodeInit(rate, depth, target, varLevel, typeWeights) };
+		{ ^Wires_Var.getVar(rate, depth, target, varLevel, typeWeights, parent, quota) }
+		{ ^super.new.nodeInit(rate, depth, target, varLevel, typeWeights, quota) };
 	}
 
-	nodeInit {|rate, dpth, target, level, tWghts|
+	nodeInit {|rate, dpth, target, level, tWghts, qt|
 		// la définition
 		var def;
 		// les arguments
 		var args;
+		// les quotas des sous-noeuds
+		var subQt;
 		// date
 		date = Date.getDate.rawSeconds;
 		// profondeur
@@ -42,14 +46,32 @@ Wires_Node {
 		varLevel = level;
 		// poids des types
 		typeWeights = tWghts;
+		// le quota de noeuds
+		quota = qt;
 		// obtenir une définition aléatoire
-		def = Wires_Def.randDef(rate, dpth, typeWeights);
+		def = Wires_Def.randDef(rate, typeWeights, *quota);
 		// créer le Bus de sortie
 		outBus = Bus.alloc(rate);
+		// calculer les quotas des sous-noeuds
+		if (def.synthArgs.notEmpty) {
+			subQt = (
+				[(quota - def.nbSubs)] ++
+				def.synthArgs.collect {|rate|
+					switch (rate)
+					{'scalar'} {[0, 0]}
+					{'control'} {[rand(1.0), 0]}
+					{'audio'}   {[rand(2.0), rand(1.0)]};
+				}
+			).flop.collect {
+				|it| var a, b; #a ... b = it;
+				if (b.any(_!=0)) {
+					(b.normalizeSum * a).integrate.round.differentiate.asInteger
+				} {b}
+			}.flop
+		};
 		// créer les arguments
 		args = def.synthArgs.collect {|rate, i|
-			if (rate != 'scalar')
-			{[i, rate]}
+			if (rate != 'scalar') {[i, rate, subQt[i]]};
 		}.select(_.notNil);
 		// créer les sous-noeuds
 		if (args.notEmpty) {
@@ -58,10 +80,10 @@ Wires_Node {
 			// créer un groupe des sous-noeuds
 			subGroup = ParGroup(group);
 			args = args.collect {|item|
-				var i, rate;
-				#i, rate = item;
+				var i, rate, qt;
+				#i, rate, qt = item;
 				["p%".format(i).asSymbol,
-					Wires_Node(rate, depth + 1, subGroup, varLevel, typeWeights)]
+					Wires_Node(rate, depth + 1, subGroup, varLevel, typeWeights, this, qt)]
 			};
 			// enregistrer les sous-noeuds
 			subNodes = args;
@@ -81,15 +103,21 @@ Wires_Node {
 		isRunning = true;
 	}
 
-	*out {|volume = 0.25, typeWeights|
-		^super.new.outNodeInit(volume, typeWeights);
+	*out {|volume = 0.25, typeWeights, quota|
+		^super.new.outNodeInit(volume, typeWeights, quota);
 	}
 
-	outNodeInit {|volume, tWghts|
+	outNodeInit {|volume, tWghts, qt|
+		// quotas des sous-noeuds
+		var subQt;
 		// date
 		date = Date.getDate.rawSeconds;
 		// profondeur
 		depth = -1;
+		// quota
+		quota = qt;
+		// répartition du quota
+		subQt = [([rand(0.5), 1] * quota[0]).round.differentiate.asInteger, [0, quota[1]]].flop;
 		// niveau de variable
 		varLevel = 0;
 		// poids des types
@@ -101,8 +129,8 @@ Wires_Node {
 		// créer le sous-groupe
 		subGroup = ParGroup(group);
 		// créer l'entrée
-		subNodes = [[in: Wires_Node('audio', 0, subGroup, 0, typeWeights)],
-			[pos: Wires_Node('control', 0, subGroup, 0, typeWeights)]];
+		subNodes = [[in: Wires_Node('audio', 0, subGroup, 0, typeWeights, this, subQt[1])],
+			[pos: Wires_Node('control', 0, subGroup, 0, typeWeights, this, subQt[0])]];
 		numNodes = subNodes.sum {|e| e[1].numNodes } + 1;
 		// créer le Synth
 		synth = Wires_Def.outDef.makeInstance([vol: volume] ++
@@ -123,7 +151,7 @@ Wires_Node {
 		// remplacer le noeud
 		{
 			var rate = node.outBus.rate;
-			var new = Wires_Node(rate, depth + 1, subGroup, varLevel, typeWeights);
+			var new = Wires_Node(rate, depth + 1, subGroup, varLevel, typeWeights, this, node.quota(this));
 			// effectuer la transition
 			Routine {
 				var bus = Bus.alloc(rate);
@@ -145,10 +173,10 @@ Wires_Node {
 		}
 	}
 
-	free {
+	free {|parent|
 		if (isRunning) {synth.free; isRunning = false};
 		if (outBus.notNil) {outBus.free};
-		subNodes.do {|node| node[1].free };
+		subNodes.do {|node| node[1].free(this) };
 		if (subGroup.notNil) {subGroup.free};
 		if (group.notNil) {group.free};
 	}

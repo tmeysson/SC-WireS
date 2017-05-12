@@ -7,13 +7,8 @@
 	var mult = {|a| 2**(positive.(a)*3)};
 	var gain = {|a| 0.33 ** positive.(a)};
 	var normalizeWeight = {|list, weight = 1| [weight/list.size, list]};
-	var typeWeight = {|type, list| [\type, {|i| (type == i).asInteger + 0.01}, list]};
+	var typeWeight = {|type, list| [\type, type, list]};
 	[
-		// les numéros de types
-		[
-			control: (0..3), // constante, séquence, oscillateur, fonction arithmétique
-			audio: (0..1) // oscillateur, fonction arithmétique
-		],
 		// CONSTANTE
 		typeWeight.(2, [{ DC.kr(Rand(-1, 1)) }, []]),
 		// GENERATEURS DE SEQUENCE
@@ -35,7 +30,7 @@
 		typeWeight.(0,
 			[\kr, \ar].collect {|rate, lvl| normalizeWeight.(
 				[SinOsc, LFSaw, LFPulse, LFTri, LFNoise0, LFNoise1].collect {|class|
-					[nil, [[2]]].collect {|fmParm|
+					([nil] ++ if (rate == \ar) {[[[2]]]}).collect {|fmParm|
 						[{|amp, freq, fm|
 							gain.(amp) * class.perform(rate,
 								option.(freqRange[rate].(freq), fmParm, {|it| it * (2 ** fm)}));

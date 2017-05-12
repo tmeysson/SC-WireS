@@ -7,12 +7,6 @@ Wires_Def {
 	classvar defs;
 	// la définition du module de sortie
 	classvar <outDef;
-	// les poids
-	classvar weights;
-	// le nombre de niveaux par cible d'espérance
-	classvar nbLevels;
-	// le nombre de types de modules
-	classvar typeSets;
 	// les SynthDef de transition
 	classvar transDefs;
 
@@ -20,8 +14,11 @@ Wires_Def {
 	var synthDef, <synthArgs;
 	// le type de sortie
 	var <rate;
-	// le nombre de fils et le poids relatif
-	var <nbSons, <weight;
+	// le poids relatif et le type
+	var <weight;
+	var <type;
+	// le nombre de fils audio et contrôle
+	var <nbSubs;
 
 	*initClass {
 		libUpdate = false;
@@ -32,7 +29,6 @@ Wires_Def {
 		if (libUpdate) {
 			this.removeDefs;
 			this.makeDefs;
-			this.makeWeights;
 			this.addDefs;
 			libUpdate = false;
 		};
@@ -61,9 +57,13 @@ Wires_Def {
 		// fonction récursive d'évaluation de la bibliothèque
 		var rec;
 		// initialiser les definitions
-		defs = Dictionary.newFrom([audio: List(), control: List()]);
+		var maxA = 2, maxK = 3;
+		defs = Dictionary.newFrom([
+			audio: {{List()} ! (maxA+1)} ! (maxK+1),
+			control: {List()} ! (maxK+1)
+		]);
 		// compiler les définitions
-		rec = {|elt, prefix, weight|
+		rec = {|elt, prefix, weight, type|
 			// pour chaque définition
 			elt.collect {|def, i|
 				case
@@ -81,30 +81,34 @@ Wires_Def {
 					// pour chaque combinaison
 					.collect {|parms, j|
 						// créer la définition
-						this.new("%-%-%".format(prefix, i, j), def[0], parms, weight);
+						this.new("%-%-%".format(prefix, i, j), def[0], parms, weight, type);
 					}
 				}
 				// cas d'une pondération
 				{def[0].isNumber}
 				{
-					rec.(def[1..], "%-%".format(prefix, i), def[0] * weight)
+					rec.(def[1..], "%-%".format(prefix, i), def[0] * weight, type)
 				}
 				// cas d'une fonction de type
 				// note: on peut ajouter des fonctionnalités en utilisant différents symboles
 				{def[0] == \type}
 				{
-					rec.(def[2..], "%-%".format(prefix, i), def[1] * weight)
+					rec.(def[2..], "%-%".format(prefix, i), weight, def[1])
 				}
 				// cas récursif (par défaut)
-				{ rec.(def, "%-%".format(prefix, i), weight) };
+				{ rec.(def, "%-%".format(prefix, i), weight, type) };
 			}
 			// concatener les résultats
 			.reduce('++');
 		};
 
-		rec.(libContent[1..], "", 1)
+		rec.(libContent, "", 1)
 		// ajouter dans la liste correspondante
-		.do {|def| defs[def.rate].add(def) };
+		.do {|def|
+			switch (def.rate)
+			{'audio'}   {defs['audio'][def.nbSubs[0]][def.nbSubs[1]].add(def)}
+			{'control'} {defs['control'][def.nbSubs[0]].add(def)};
+		};
 
 		// définition du module de sortie
 		if (outDef.isNil) {outDef = this.out};
@@ -124,14 +128,14 @@ Wires_Def {
 
 	*addDefs {
 		// ajouter les définitions
-		defs.do(_.do(_.add));
+		defs.do{|type| type.flat.do(_.add)};
 		outDef.add;
 		transDefs.do(_.add);
 	}
 
 	*removeDefs {
 		// supprimer les définitions
-		defs.do(_.do(_.remove));
+		defs.do{|type| type.flat.do(_.remove)};
 		outDef.remove;
 		transDefs.do {|def| SynthDef.removeAt(def.name)};
 	}
@@ -140,85 +144,11 @@ Wires_Def {
 
 	remove { SynthDef.removeAt(synthDef.name) }
 
-	// compiler les poids
-	*makeWeights {|start = 1.5, factor = (2/3), nblvls = 3|
-		// listes des [nombre de fils, poids relatif]
-		var defSpecs = defs.collect(_.collect {|def| [def.nbSons, def.weight]});
-		var sons = defSpecs.collect(_.collect(_[0]));
-		// fonctions de poids
-		var weightFuncs;
-
-		// liste des cibles en ordre decroissant
-		var targets = (start * (factor ** (0..2)));
-
-		// initialiser le nombre de niveaux par indice
-		nbLevels = nblvls;
-		// initialiser le nombre de types et les fonctions de poids
-		typeSets = Dictionary.newFrom(libContent[0]);
-		weightFuncs = defSpecs.copy.keysValuesChange {|rate, specList|
-			var sonsList, weightList;
-			#sonsList, weightList = specList.flop;
-			typeSets[rate].collect {|type|
-				var wList = weightList.collect(_.(type));
-				if (wList.inject(true) {|r,e| r && (e == 0)}) {nil} {
-					{|alpha|
-						(wList * ((sonsList + 1) ** alpha.neg)).normalizeSum
-					}
-				}
-			}
-		};
-		// initialiser les poids
-		weights = Dictionary.new;
-		// on itère sur les types
-		['audio', 'control'].do {|rate|
-			// recherche par interpolation
-			var list = sons[rate];
-			var funcs = weightFuncs[rate];
-			var alpha = 0;
-			var diff;
-			weights[rate] =
-			// pour chaque valeur cible
-			targets.collect {|target|
-				// pour chaque type
-				typeSets[rate].collect {|type|
-					var func = funcs[type];
-					if (func.isNil) {nil} {
-						var step = 0.5;
-						// si alpha est trop faible, l'augmenter
-						while { ((list * func.(alpha)).sum - target) > 0 }
-						{ alpha = alpha + 1 };
-						// si alpha est trop fort, le diminuer
-						while { ((list * func.(alpha)).sum - target) < 0 }
-						{ alpha = alpha - 1 };
-						// on se trouve en dessous de la valeur cible, à une distance <= 1
-						// procéder par dichotomie jusqu'à satisfaction
-						while {
-							diff = (list * func.(alpha)).sum - target;
-							diff.abs > 0.01
-						}
-						{ alpha = alpha + (step * diff.sign); step = step * 0.5; };
-						// retourner la liste de poids
-						func.(alpha);
-					}
-				}
-			};
-		}
+	*new {|idNum, func, parms, weight, type|
+		^super.new.defInit(idNum, func, parms, weight, type);
 	}
 
-	*weightStats {
-		weights.do {|rate| rate.do {|target|
-			target.flop.collect {|tab|
-				var avg = tab.sum / tab.size;
-				tab.sum({|v| abs(v-avg)}) / tab.size;
-			}.sum.postln
-		}};
-	}
-
-	*new {|idNum, func, parms, weight|
-		^super.new.defInit(idNum, func, parms, weight);
-	}
-
-	defInit {|idNum, func, parms, wght|
+	defInit {|idNum, func, parms, wght, tp|
 		// créer la SynthDef
 		synthDef = SynthDef("wires%".format(idNum).asSymbol,
 			{|out|
@@ -234,8 +164,12 @@ Wires_Def {
 		// enregistrer les types des arguments
 		synthArgs = parms.collect(_[0]);
 		// enregistrer le nombre de fils et le poids
-		nbSons = synthArgs.inject(0) {|acc, it| acc + (it != 'scalar').asInteger};
+		// nbSons = synthArgs.inject(0) {|acc, it| acc + (it != 'scalar').asInteger};
+		type = tp;
 		weight = wght;
+		// enregistrer le nombre de fils audio/contrôle
+		nbSubs = if (synthArgs.isEmpty) {[0, 0]}
+		{synthArgs.sum {|it| [(it == 'control').asInteger, (it == 'audio').asInteger]}};
 	}
 
 	*out {
@@ -250,13 +184,22 @@ Wires_Def {
 		synthArgs = ['audio', 'control'];
 	}
 
-	*randDef {|rate, depth, typeWeights|
-		var types = if (typeWeights.notNil) {typeWeights[typeSets[rate]]} {1 ! typeSets[rate].size};
-		var mixedWeights = [weights[rate][(depth/nbLevels).floor.clip(0,2)], types].flop
-		.sum {|entry| if (entry[0].notNil) {[entry[0] * entry[1], entry[1]]} {[0,0]} };
-		mixedWeights = mixedWeights[0]/mixedWeights[1];
-		// choisir une définition suivant les poids et la profondeur
-		^defs[rate][mixedWeights.windex];
+	*randDef {|rate, typeWeights, maxK, maxA|
+		var minA;
+		var minK;
+		var subSet;
+		var weights;
+
+		#minA, minK = if(maxA > 0)
+		{[1, 0]}
+		{[0, if(maxK > 0) {1} {0}]};
+
+		subSet = defs[rate][minK..maxK];
+		if (rate == 'audio') {subSet = subSet.collect {|tab| tab[minA..maxA]}};
+
+		subSet = subSet.flat;
+		weights = subSet.collect {|def| def.weight * typeWeights[def.type]}.normalizeSum;
+		^subSet[weights.windex];
 	}
 
 	makeInstance {|args, target|
