@@ -84,7 +84,7 @@ Wires_Var : Wires_Node {
 		if (refs == 0)
 		{
 			// supprimer le noeud
-			super.free;
+			super.free(parent);
 			levels[varLevel-1][outBus.rate].remove(this);
 			// si le niveau est vide, le supprimer
 			if (levels[varLevel-1].sum(_.size) == 0)

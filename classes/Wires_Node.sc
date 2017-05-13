@@ -23,7 +23,7 @@ Wires_Node {
 	// la date de création
 	var <date;
 	// le verrou de renouvellement
-	var <>lock;
+	var lock;
 	// le niveau de variable ciblé
 	var varLevel;
 
@@ -103,7 +103,7 @@ Wires_Node {
 		// créer le Synth
 		synth = def.makeInstance(args, group ? target);
 		isRunning = true;
-		lock = false;
+		lock = Semaphore();
 	}
 
 	*out {|volume = 0.25, typeWeights, quota|
@@ -142,60 +142,60 @@ Wires_Node {
 		// libérer le sous-graphe à la fin
 		synth.onFree {isRunning = false; this.free};
 		isRunning = true;
+		lock = Semaphore();
 	}
 
 	renew {|num|
 		var index, select, node;
-		if (num < 1) {num = 1};
-		index = subNodes.minIndex {|it| it[1].date(this) + rand(1.0) +
-			// ne pas sélectionner le noeuds vérouillés
-			(it[1].lock.asInteger * 1e12)};
-		select = subNodes[index];
-		node = select[1];
-		// si le noeud est déverouillé
-		if (node.lock.not) {
+		{
+			// section vérouillée
+			lock.wait;
+			if (num < 1) {num = 1};
+			index = subNodes.minIndex {|it| it[1].date(this) + rand(1.0)};
+			select = subNodes[index];
+			node = select[1];
 			if (node.numNodes <= num)
 			// remplacer le noeud
 			{
-				// vérouiller le noeud
-				node.lock = true;
 				// effectuer la transition
-				Routine {
-					var rate = node.outBus.rate;
-					var new = Wires_Node(rate, depth + 1, subGroup, varLevel, typeWeights,
-						this, node.quota(this));
-					var bus = Bus.alloc(rate);
-					Synth("wires-trans-%".format(rate).asSymbol,
-						[out: bus, in1: node.outBus, in2: new.outBus], synth, 'addBefore').onFree {bus.free};
-					synth.set(select[0], bus);
-					// vérouiller le nouveau noeud pour empêcher tout renouvellement supplémentaire
-					new.lock = true;
-					// mettre à jour le noeud courant
-					subNodes[index][1] = new;
-					numNodes = numNodes - node.numNodes + new.numNodes;
-					// attendre la fin de la transition
-					1.wait;
-					// terminer la transition
-					synth.set(select[0], new.outBus);
-					node.free;
-					new.lock = false;
-				}.play;
+				var rate, new, bus;
+				rate = node.outBus.rate;
+				subNodes[index][1] = new = Wires_Node(rate, depth + 1, subGroup, varLevel, typeWeights,
+					this, node.quota(this));
+				bus = Bus.alloc(rate);
+				Synth("wires-trans-%".format(rate).asSymbol,
+					[out: bus, in1: node.outBus, in2: new.outBus], synth, 'addBefore').onFree {bus.free};
+				synth.set(select[0], bus);
+				numNodes = numNodes - node.numNodes + new.numNodes;
+				// attendre la fin de la transition
+				1.wait;
+				// terminer la transition
+				synth.set(select[0], new.outBus);
+				node.free;
 			}
 			// propager la requête
 			{
 				numNodes = numNodes - node.numNodes;
 				node.renew(num);
 				numNodes = numNodes + node.numNodes;
-			}
-		}
+			};
+			// fin du verrou
+			lock.signal;
+		}.forkIfNeeded;
 	}
 
 	free {|parent|
-		if (isRunning) {synth.free; isRunning = false};
-		if (outBus.notNil) {outBus.free};
-		subNodes.do {|node| node[1].free(this) };
-		if (subGroup.notNil) {subGroup.free};
-		if (group.notNil) {group.free};
+		{
+			// section vérouillée
+			lock.wait;
+			if (isRunning) {synth.free; isRunning = false};
+			if (outBus.notNil) {outBus.free};
+			subNodes.do {|node| node[1].free(this) };
+			if (subGroup.notNil) {subGroup.free};
+			if (group.notNil) {group.free};
+			// fin du verrou
+			lock.signal;
+		}.forkIfNeeded;
 	}
 
 	release {
