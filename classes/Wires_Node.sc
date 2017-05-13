@@ -22,6 +22,8 @@ Wires_Node {
 	var <numNodes;
 	// la date de création
 	var <date;
+	// le verrou de renouvellement
+	var <>lock;
 	// le niveau de variable ciblé
 	var varLevel;
 
@@ -101,6 +103,7 @@ Wires_Node {
 		// créer le Synth
 		synth = def.makeInstance(args, group ? target);
 		isRunning = true;
+		lock = false;
 	}
 
 	*out {|volume = 0.25, typeWeights, quota|
@@ -144,32 +147,41 @@ Wires_Node {
 	renew {|num|
 		var index, select, node;
 		if (num < 1) {num = 1};
-		index = subNodes.minIndex {|it| it[1].date + rand(1.0)};
+		index = subNodes.minIndex {|it| it[1].date + rand(1.0) +
+			// ne pas sélectionner le noeuds vérouillés
+			(it[1].lock.asInteger * 1e12)};
 		select = subNodes[index];
 		node = select[1];
-		if (node.numNodes <= num)
-		// remplacer le noeud
-		{
-			var rate = node.outBus.rate;
-			var new = Wires_Node(rate, depth + 1, subGroup, varLevel, typeWeights, this, node.quota(this));
-			// effectuer la transition
-			Routine {
-				var bus = Bus.alloc(rate);
-				var trans = Synth("wires-trans-%".format(rate).asSymbol,
-					[out: bus, in1: node.outBus, in2: new.outBus], synth, 'addBefore');
-				synth.set(select[0], bus);
-				1.wait;
-				synth.set(select[0], new.outBus);
-				node.free; bus.free;
-			}.play;
-			subNodes[index][1] = new;
-			numNodes = numNodes - node.numNodes + new.numNodes;
-		}
-		// propager la requête
-		{
-			numNodes = numNodes - node.numNodes;
-			node.renew(num);
-			numNodes = numNodes + node.numNodes;
+		// si le noeud est déverouillé
+		if (node.lock.not) {
+			if (node.numNodes <= num)
+			// remplacer le noeud
+			{
+				// vérouiller le noeud
+				node.lock = true;
+				// effectuer la transition
+				Routine {
+					var rate = node.outBus.rate;
+					var new = Wires_Node(rate, depth + 1, subGroup, varLevel, typeWeights,
+						this, node.quota(this));
+					var bus = Bus.alloc(rate);
+					numNodes = numNodes + new.numNodes;
+					Synth("wires-trans-%".format(rate).asSymbol,
+						[out: bus, in1: node.outBus, in2: new.outBus], synth, 'addBefore').onFree {bus.free};
+					synth.set(select[0], bus);
+					1.wait;
+					synth.set(select[0], new.outBus);
+					node.free;
+					subNodes[index][1] = new;
+					numNodes = numNodes - node.numNodes;
+				}.play;
+			}
+			// propager la requête
+			{
+				numNodes = numNodes - node.numNodes;
+				node.renew(num);
+				numNodes = numNodes + node.numNodes;
+			}
 		}
 	}
 
