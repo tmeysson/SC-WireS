@@ -147,7 +147,7 @@ Wires_Node {
 	renew {|num|
 		var index, select, node;
 		if (num < 1) {num = 1};
-		index = subNodes.minIndex {|it| it[1].date + rand(1.0) +
+		index = subNodes.minIndex {|it| it[1].date(this) + rand(1.0) +
 			// ne pas sélectionner le noeuds vérouillés
 			(it[1].lock.asInteger * 1e12)};
 		select = subNodes[index];

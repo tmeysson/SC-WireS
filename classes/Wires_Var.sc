@@ -40,16 +40,17 @@ Wires_Var : Wires_Node {
 
 	*new {|rate = 'audio', depth = 0, target, varLevel, typeWeights, parent, quota|
 		^super.new(rate, depth, lvlGroups[varLevel], varLevel+1, typeWeights,
-			parent, quota, true).varInit(parent, quota);
+			parent, quota, true).varInit(parent);
 	}
 
-	varInit {|parent, qt|
+	varInit {|parent|
 		// initialiser le compteur de références
 		refs = 1;
 		// ajouter dans les variables
 		levels[varLevel-1][outBus.rate].add(this);
-		// enregistrer le quota initial
-		quota = Dictionary().put(parent, qt);
+		// enregistrer le quota et la date initiales
+		quota = Dictionary().put(parent, quota);
+		date = Dictionary().put(parent, date);
 	}
 
 	quota {|parent|
@@ -57,11 +58,16 @@ Wires_Var : Wires_Node {
 		^quota[parent];
 	}
 
+	date {|parent|
+		^date[parent]
+	}
+
 	incRefs {|parent, qt|
 		// augmenter le nombre de références
 		refs = refs + 1;
 		// enregistrer le quota
 		quota.put(parent, qt);
+		date.put(parent, Date.getDate.rawSeconds);
 	}
 
 	decRefs {|parent|
@@ -69,6 +75,7 @@ Wires_Var : Wires_Node {
 		refs = refs - 1;
 		// supprimer le quota
 		quota.removeAt(parent);
+		date.removeAt(parent);
 	}
 
 	free {|parent|
