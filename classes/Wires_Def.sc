@@ -118,7 +118,7 @@ Wires_Def {
 			transDefs = ['audio', 'control'].collect {|it|
 				var rate = switch(it) {'audio'} {\ar} {'control'} {\kr};
 				SynthDef("wires-trans-%".format(it).asSymbol, {|out, in1, in2|
-					var env = EnvGen.kr(Env([0, 1, 1], [1, 1]), doneAction: 2);
+					var env = Line.kr(doneAction: 2);
 					Out.perform(rate, out, ((1 - env) * In.perform(rate, in1)) +
 						(env * In.perform(rate, in2)));
 				})

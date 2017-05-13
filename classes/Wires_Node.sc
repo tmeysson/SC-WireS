@@ -155,12 +155,12 @@ Wires_Node {
 			// effectuer la transition
 			Routine {
 				var bus = Bus.alloc(rate);
-				Synth("wires-trans-%".format(rate).asSymbol,
-					[out: bus, in1: node.outBus, in2: new.outBus], synth, 'addBefore').onFree {bus.free};
+				var trans = Synth("wires-trans-%".format(rate).asSymbol,
+					[out: bus, in1: node.outBus, in2: new.outBus], synth, 'addBefore');
 				synth.set(select[0], bus);
 				1.wait;
 				synth.set(select[0], new.outBus);
-				node.free;
+				node.free; bus.free;
 			}.play;
 			subNodes[index][1] = new;
 			numNodes = numNodes - node.numNodes + new.numNodes;
