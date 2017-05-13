@@ -165,15 +165,20 @@ Wires_Node {
 					var new = Wires_Node(rate, depth + 1, subGroup, varLevel, typeWeights,
 						this, node.quota(this));
 					var bus = Bus.alloc(rate);
-					numNodes = numNodes + new.numNodes;
 					Synth("wires-trans-%".format(rate).asSymbol,
 						[out: bus, in1: node.outBus, in2: new.outBus], synth, 'addBefore').onFree {bus.free};
 					synth.set(select[0], bus);
+					// vérouiller le nouveau noeud pour empêcher tout renouvellement supplémentaire
+					new.lock = true;
+					// mettre à jour le noeud courant
+					subNodes[index][1] = new;
+					numNodes = numNodes - node.numNodes + new.numNodes;
+					// attendre la fin de la transition
 					1.wait;
+					// terminer la transition
 					synth.set(select[0], new.outBus);
 					node.free;
-					subNodes[index][1] = new;
-					numNodes = numNodes - node.numNodes;
+					new.lock = false;
 				}.play;
 			}
 			// propager la requête
