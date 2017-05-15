@@ -121,7 +121,7 @@ Wires_Node {
 		quota = qt;
 		// répartition du quota
 		// subQt = [([rand(0.5), 1] * quota[0]).round.differentiate.asInteger, [0, quota[1]]].flop;
-		subQt = [[1, 0], quota - [1, 0]];
+		// subQt = [[1, 0], quota - [1, 0]];
 		// niveau de variable
 		varLevel = 0;
 		// poids des types
@@ -133,8 +133,9 @@ Wires_Node {
 		// créer le sous-groupe
 		subGroup = ParGroup(group);
 		// créer l'entrée
-		subNodes = [[in: Wires_Node('audio', 0, subGroup, 0, typeWeights, this, subQt[1])],
-			[pos: Wires_Node('control', 0, subGroup, 0, [0, 0, 1, 0], this, subQt[0])]];
+		subNodes = [[in: Wires_Node('audio', 0, subGroup, 0, typeWeights, this, quota)],
+			// [pos: Wires_Node('control', 0, subGroup, 0, [0, 0, 1, 0], this, subQt[0])]
+		];
 		numNodes = subNodes.sum {|e| e[1].numNodes } + 1;
 		// créer le Synth
 		synth = Wires_Def.outDef.makeInstance([vol: volume] ++

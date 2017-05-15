@@ -177,11 +177,11 @@ Wires_Def {
 	}
 
 	outDefInit {
-		synthDef = SynthDef('wires-out', {|vol = 0.25, in, pos, gate = 1|
+		synthDef = SynthDef('wires-out', {|vol = 0.25, in, gate = 1|
 			Out.ar(0, Pan2.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(in),
-				In.kr(pos)))
+				Rand(-1, 1)))
 		});
-		synthArgs = ['audio', 'control'];
+		synthArgs = ['audio'];
 	}
 
 	*randDef {|rate, typeWeights, maxK, maxA|
