@@ -179,7 +179,9 @@ Wires_Def {
 	outDefInit {
 		synthDef = SynthDef('wires-out', {|vol = 0.25, in, gate = 1|
 			Out.ar(0, Pan2.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(in),
-				Rand(-1, 1)))
+				// Rand(-1, 1)
+				DemandEnvGen.kr(Dseq(Dwhite(-1, 1) ! 2, inf), Dseq([2 ** Dwhite(0, 6), 1], inf))
+			))
 		});
 		synthArgs = ['audio'];
 	}
