@@ -31,7 +31,7 @@ Wires_Var : Wires_Node {
 		}
 		// si le niveau n'existe pas, le créer
 		{
-			lvlGroups.add(ParGroup(lvlGroups[varLevel-1] ? baseGroup, 'addAfter'));
+			lvlGroups.add(ParGroup(lvlGroups[varLevel-1] ? Wires.baseGroup, 'addAfter'));
 			levels.add(Dictionary.newFrom([audio: List(), control: List()]));
 			// créer une variable et la retourner
 			^this.new(rate, depth, target, varLevel, typeWeights, parent, quota);

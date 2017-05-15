@@ -1,7 +1,4 @@
 Wires_Node {
-	// le groupe parallèle de base
-	classvar baseGroup;
-
 	// le Synth et son état
 	var synth, isRunning;
 	// les sous-noeuds
@@ -126,10 +123,8 @@ Wires_Node {
 		varLevel = 0;
 		// poids des types
 		typeWeights = tWghts;
-		// créer le groupe de base, si il n'existe pas
-		if (baseGroup.isNil) {baseGroup = ParGroup()};
 		// créer le groupe d'accueil
-		group = Group(baseGroup);
+		group = Group(Wires.baseGroup);
 		// créer le sous-groupe
 		subGroup = ParGroup(group);
 		// créer l'entrée

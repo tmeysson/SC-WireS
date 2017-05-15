@@ -4,6 +4,8 @@ Wires {
 	classvar instances;
 	// verrou d'initialisation
 	classvar setupLock;
+	// le groupe parallèle de base
+	classvar <baseGroup;
 
 	// la racine du graphe
 	var <root;
@@ -22,11 +24,18 @@ Wires {
 	wiresInit {|volume, typeWeights, dt, rt, debug|
 		delay = dt;
 		randTime = rt;
+
 		renew = Routine {
 			protect {
 				setupLock.wait;
 				Server.default.bootSync;
 				Wires_Def.setup;
+				// créer le groupe de base, si il n'existe pas
+				if (baseGroup.isNil || {baseGroup.isRunning.not})
+				{
+					baseGroup = ParGroup();
+					NodeWatcher.register(baseGroup);
+				};
 				Server.default.sync;
 			} {setupLock.signal};
 			root = Wires_Node.out(volume, typeWeights, [40, 10]);
@@ -45,7 +54,7 @@ Wires {
 						Server.default.controlBusAllocator.blocks.size,
 						numSynths, numNodes.round(0.01)).postln;
 				};
-				root.renew(2 ** rand(log2(root.numNodes) / 0.95));
+				{root.renew(2 ** rand(log2(root.numNodes) / 0.95))}.fork;
 				(delay * (2 ** rand(randTime))).wait;
 			}.loop;
 		}.play;
