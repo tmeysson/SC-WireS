@@ -177,13 +177,14 @@ Wires_Def {
 	}
 
 	outDefInit {
-		synthDef = SynthDef('wires-out', {|vol = 0.25, in, gate = 1|
-			Out.ar(0, Pan2.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(in),
+		synthDef = SynthDef('wires-out', {|vol = 0.25, p0, gate = 1|
+			Out.ar(0, Pan2.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(p0),
 				// Rand(-1, 1)
 				DemandEnvGen.kr(Dwhite(-1, 1), 2 ** Dwhite(0, 6))
 			))
 		});
 		synthArgs = ['audio'];
+		nbSubs = [0, 1];
 	}
 
 	*randDef {|rate, typeWeights, maxK, maxA|
@@ -204,7 +205,5 @@ Wires_Def {
 		^subSet[weights.windex];
 	}
 
-	makeInstance {|args, target|
-		^Synth(synthDef.name, args, target, 'addToTail');
-	}
+	name { ^synthDef.name }
 }

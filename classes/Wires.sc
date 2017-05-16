@@ -38,7 +38,7 @@ Wires {
 				};
 				Server.default.sync;
 			} {setupLock.signal};
-			root = Wires_Node.out(volume, typeWeights, [40, 10]);
+			root = Wires_OutNode(volume, typeWeights, [40, 10]);
 			instances.add(this);
 			{
 				/*

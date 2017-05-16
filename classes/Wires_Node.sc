@@ -1,4 +1,6 @@
 Wires_Node {
+	// la définition et les arguments
+	var def, args;
 	// le Synth et son état
 	var synth, isRunning;
 	// les sous-noeuds
@@ -24,33 +26,25 @@ Wires_Node {
 	// le niveau de variable ciblé
 	var varLevel;
 
-	*new {|rate = 'audio', depth = 0, target, varLevel = 0, typeWeights, parent, quota, isVar = false|
-		if (isVar.not && 0.1.coin)
-		{ ^Wires_Var.getVar(rate, depth, target, varLevel, typeWeights, parent, quota) }
-		{ ^super.new.nodeInit(rate, depth, target, varLevel, typeWeights, quota) };
+	*new {|typeWeights, quota|
+		^super.new.nodeInit(typeWeights, quota);
 	}
 
-	nodeInit {|rate, dpth, target, level, tWghts, qt|
-		// la définition
-		var def;
-		// les arguments
-		var args;
-		// les quotas des sous-noeuds
-		var subQt;
+	nodeInit {|tWghts, qt|
 		// date
 		date = Date.getDate.rawSeconds;
-		// profondeur
-		depth = dpth;
-		// niveau de variable
-		varLevel = level;
 		// poids des types
 		typeWeights = tWghts;
 		// le quota de noeuds
 		quota = qt;
-		// obtenir une définition aléatoire
-		def = Wires_Def.randDef(rate, typeWeights, *quota);
-		// créer le Bus de sortie
-		outBus = Bus.alloc(rate);
+		// activer le noeud
+		isRunning = true;
+		// initialiser le verrou
+		lock = Semaphore();
+	}
+
+	makeArgs {|def, target|
+		var subQt;
 		// calculer les quotas des sous-noeuds
 		if (def.synthArgs.notEmpty) {
 			subQt = (
@@ -82,7 +76,7 @@ Wires_Node {
 				var i, rate, qt;
 				#i, rate, qt = item;
 				["p%".format(i).asSymbol,
-					Wires_Node(rate, depth + 1, subGroup, varLevel, typeWeights, this, qt)]
+					Wires_InnerNode(rate, depth + 1, subGroup, varLevel, typeWeights, this, qt)]
 			};
 			// enregistrer les sous-noeuds
 			subNodes = args;
@@ -95,51 +89,10 @@ Wires_Node {
 			subNodes = [];
 		};
 		numNodes = 1 + subNodes.sum {|e| e[1].numNodes};
-		// ajouter le Bus de sortie
-		args = [out: outBus] ++ args;
-		// créer le Synth
-		synth = def.makeInstance(args, group ? target);
-		isRunning = true;
-		lock = Semaphore();
 	}
 
-	*out {|volume = 0.25, typeWeights, quota|
-		^super.new.outNodeInit(volume, typeWeights, quota);
-	}
-
-	outNodeInit {|volume, tWghts, qt|
-		// quotas des sous-noeuds
-		var subQt;
-		// date
-		date = Date.getDate.rawSeconds;
-		// profondeur
-		depth = -1;
-		// quota
-		quota = qt;
-		// répartition du quota
-		// subQt = [([rand(0.5), 1] * quota[0]).round.differentiate.asInteger, [0, quota[1]]].flop;
-		// subQt = [[1, 0], quota - [1, 0]];
-		// niveau de variable
-		varLevel = 0;
-		// poids des types
-		typeWeights = tWghts;
-		// créer le groupe d'accueil
-		group = Group(Wires.baseGroup);
-		// créer le sous-groupe
-		subGroup = ParGroup(group);
-		// créer l'entrée
-		subNodes = [[in: Wires_Node('audio', 0, subGroup, 0, typeWeights, this, quota)],
-			// [pos: Wires_Node('control', 0, subGroup, 0, [0, 0, 1, 0], this, subQt[0])]
-		];
-		numNodes = subNodes.sum {|e| e[1].numNodes } + 1;
-		// créer le Synth
-		synth = Wires_Def.outDef.makeInstance([vol: volume] ++
-			subNodes.collect {|p| [p[0], p[1].outBus]}.reduce('++'),
-			group);
-		// libérer le sous-graphe à la fin
-		synth.onFree {isRunning = false; this.free};
-		isRunning = true;
-		lock = Semaphore();
+	makeSynth {|target|
+		synth = Synth(def.name, args, target, 'addToTail');
 	}
 
 	renew {|num|
@@ -157,7 +110,7 @@ Wires_Node {
 				// effectuer la transition
 				var rate, new, bus;
 				rate = node.outBus.rate;
-				subNodes[index][1] = new = Wires_Node(rate, depth + 1, subGroup, varLevel, typeWeights,
+				subNodes[index][1] = new = Wires_InnerNode(rate, depth + 1, subGroup, varLevel, typeWeights,
 					this, node.quota(this));
 				bus = Bus.alloc(rate);
 				Synth("wires-trans-%".format(rate).asSymbol,

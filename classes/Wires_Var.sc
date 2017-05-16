@@ -1,4 +1,4 @@
-Wires_Var : Wires_Node {
+Wires_Var : Wires_InnerNode {
 	// les niveaux de variables
 	classvar levels;
 	// les groupes des niveaux
