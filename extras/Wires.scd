@@ -41,7 +41,7 @@ Server.scsynth;
 
 // ensemble de graphes
 Wires.multi(5, 0.075, typeWeights: [1, 1, 1, 1], debug: true);
-{Wires.stopAll}.fork;
+Wires.stopAll;
 
 Wires.instances.size.postln;
 {Server.default.sync; 5.postln;}.fork;
