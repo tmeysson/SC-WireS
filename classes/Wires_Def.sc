@@ -1,4 +1,4 @@
-Wires_Def {
+Wires_Def : SynthDef {
 	// la version et le contenu de la bibliothèque
 	classvar libVersion, libContent;
 	// indicateur de mise à jour de la bibliothèque
@@ -140,17 +140,11 @@ Wires_Def {
 		transDefs.do {|def| SynthDef.removeAt(def.name)};
 	}
 
-	add { synthDef.add }
-
-	remove { SynthDef.removeAt(synthDef.name) }
+	remove { SynthDef.removeAt(name) }
 
 	*new {|idNum, func, parms, weight, type|
-		^super.new.defInit(idNum, func, parms, weight, type);
-	}
-
-	defInit {|idNum, func, parms, wght, tp|
-		// créer la SynthDef
-		synthDef = SynthDef("wires%".format(idNum).asSymbol,
+		var rate;
+		^super.new("wires%".format(idNum).asSymbol,
 			{|out|
 				// créer le UGenGraph
 				var graph = func.(*parms.collect {|p, i| p[1].(i)});
@@ -160,11 +154,14 @@ Wires_Def {
 				{'control'} {Out.kr(out, graph)}
 				{'audio'}   {Out.ar(out, graph)};
 			}
-		);
+		).defInit(rate, parms, weight, type);
+	}
+
+	defInit {|rt, parms, wght, tp|
+		rate = rt;
 		// enregistrer les types des arguments
 		synthArgs = parms.collect(_[0]);
 		// enregistrer le nombre de fils et le poids
-		// nbSons = synthArgs.inject(0) {|acc, it| acc + (it != 'scalar').asInteger};
 		type = tp;
 		weight = wght;
 		// enregistrer le nombre de fils audio/contrôle
@@ -173,16 +170,15 @@ Wires_Def {
 	}
 
 	*out {
-		^super.new.outDefInit;
-	}
-
-	outDefInit {
-		synthDef = SynthDef('wires-out', {|vol = 0.25, p0, gate = 1|
+		^super.new('wires-out', {|vol = 0.25, p0, gate = 1|
 			Out.ar(0, Pan2.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(p0),
 				// Rand(-1, 1)
 				DemandEnvGen.kr(Dwhite(-1, 1), 2 ** Dwhite(0, 6))
 			))
-		});
+		}).outDefInit;
+	}
+
+	outDefInit {
 		synthArgs = ['audio'];
 		nbSubs = [0, 1];
 	}
@@ -204,6 +200,4 @@ Wires_Def {
 		weights = subSet.collect {|def| def.weight * typeWeights[def.type]}.normalizeSum;
 		^subSet[weights.windex];
 	}
-
-	name { ^synthDef.name }
 }
