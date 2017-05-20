@@ -32,7 +32,7 @@ r = Routine {
 r.stop; g.release;
 
 // idem par l'interface
-w = Wires(0 ,typeWeights: [1, 1, 1, 1], debug: true);
+w = Wires(0 ,typeWeights: [1, 1, 1, 1], numNodes: [10, 4], debug: true);
 w.stop;
 
 Server.program;
@@ -40,7 +40,7 @@ Server.supernova;
 Server.scsynth;
 
 // ensemble de graphes
-Wires.multi(5, 0.075, typeWeights: [1, 1, 1, 1], debug: true);
+Wires.multi(5, 0.075, typeWeights: [1, 1, 1, 1], numNodes: [10, 4], debug: true);
 Wires.stopAll;
 
 Wires.instances.size.postln;

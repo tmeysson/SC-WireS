@@ -17,11 +17,11 @@ Wires {
 		setupLock = Semaphore();
 	}
 
-	*new {|volume = 0.25, typeWeights, delay = 2, randTime = 0.0, debug = false|
-		^super.new.wiresInit(volume, typeWeights, delay, randTime, debug);
+	*new {|volume = 0.25, typeWeights, delay = 2, randTime = 0.0, numNodes = #[40, 10], debug = false|
+		^super.new.wiresInit(volume, typeWeights, delay, randTime, numNodes, debug);
 	}
 
-	wiresInit {|volume, typeWeights, dt, rt, debug|
+	wiresInit {|volume, typeWeights, dt, rt, numNodes, debug|
 		delay = dt;
 		randTime = rt;
 
@@ -38,7 +38,7 @@ Wires {
 				};
 				Server.default.sync;
 			} {setupLock.signal};
-			root = Wires_OutNode(volume, typeWeights, [40, 10]);
+			root = Wires_OutNode(volume, typeWeights, numNodes);
 			instances.add(this);
 			{
 				/*
@@ -60,10 +60,11 @@ Wires {
 		}.play;
 	}
 
-	*multi {|num = 0, volume = 0.25, typeWeights, debug = false|
+	*multi {|num = 0, volume = 0.25, typeWeights, numNodes, debug = false|
 		Routine {
 			num.do {
-				this.new(volume: volume, typeWeights: typeWeights, randTime: 1.0, debug: debug);
+				this.new(volume: volume, numNodes: numNodes, typeWeights: typeWeights,
+					randTime: 1.0, debug: debug);
 				debug = false; 1.wait;
 			};
 		}.play;
