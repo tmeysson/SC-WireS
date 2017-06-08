@@ -44,16 +44,29 @@ Wires_Node {
 	}
 
 	makeArgs {|def, target|
-		var subQt;
+		var subQt = (quota[0..1] - def.nbSubs) ++ [quota[2]];
+		var audioArgs = def.synthArgs.collectAs({|rate, i| if (rate == 'audio') {i} {nil}}, List)
+		.select(_.notNil);
+		var fbSubs = List();
+		while {subQt[1] < 0}
+		{
+			var chosen = audioArgs.choose;
+			audioArgs.remove(chosen);
+			fbSubs.add(chosen);
+			subQt[1] = subQt[1] + 1;
+			subQt[2] = subQt[2] - 1;
+		};
 		// calculer les quotas des sous-noeuds
 		if (def.synthArgs.notEmpty) {
 			subQt = (
-				[(quota - def.nbSubs)] ++
-				def.synthArgs.collect {|rate|
-					switch (rate)
-					{'scalar'} {[0, 0]}
-					{'control'} {[rand(1.0), 0]}
-					{'audio'}   {[rand(2.0), rand(1.0)]};
+				[subQt] ++
+				def.synthArgs.collect {|rate, i|
+					if (fbSubs.includes(i).not) {
+						switch (rate)
+						{'scalar'} {[0, 0, 0]}
+						{'control'} {[rand(1.0), 0, 0]}
+						{'audio'}   {[rand(2.0), rand(1.0), rand(1.0)]};
+					} {[0, 0, 0]}
 				}
 			).flop.collect {
 				|it| var a, b; #a ... b = it;
@@ -64,7 +77,11 @@ Wires_Node {
 		};
 		// créer les arguments
 		args = def.synthArgs.collect {|rate, i|
-			if (rate != 'scalar') {[i, rate, subQt[i]]};
+			if (fbSubs.includes(i)) {
+				[i, 'feedback', subQt[i]]
+			} {
+				if (rate != 'scalar') {[i, rate, subQt[i]]};
+			}
 		}.select(_.notNil);
 		// créer les sous-noeuds
 		if (args.notEmpty) {
@@ -75,8 +92,13 @@ Wires_Node {
 			args = args.collect {|item|
 				var i, rate, qt;
 				#i, rate, qt = item;
-				["p%".format(i).asSymbol,
-					Wires_InnerNode(rate, depth + 1, subGroup, varLevel, typeWeights, this, qt)]
+				if (rate != 'feedback') {
+					["p%".format(i).asSymbol,
+						Wires_InnerNode(rate, depth + 1, subGroup, varLevel, typeWeights, this, qt)]
+				} {
+					["p%".format(i).asSymbol,
+						Wires_FeedBackNode(depth + 1, subGroup, varLevel, typeWeights, this, qt)]
+				};
 			};
 			// enregistrer les sous-noeuds
 			subNodes = args;
@@ -110,8 +132,17 @@ Wires_Node {
 				// effectuer la transition
 				var rate, new, bus;
 				rate = node.outBus.rate;
-				subNodes[index][1] = new = Wires_InnerNode(rate, depth + 1, subGroup, varLevel, typeWeights,
-					this, node.quota(this));
+				subNodes[index][1] = new = case
+				{node.isKindOf(Wires_InnerNode)}
+				{
+					Wires_InnerNode(rate, depth + 1, subGroup, varLevel, typeWeights,
+					this, node.quota(this))
+				}
+				{node.isKindOf(Wires_FeedBackNode)}
+				{
+					Wires_FeedBackNode(depth + 1, subGroup, varLevel, typeWeights,
+					this, node.quota(this))
+				};
 				bus = Bus.alloc(rate);
 				Synth("wires-trans-%".format(rate).asSymbol,
 					[out: bus, in1: node.outBus, in2: new.outBus], synth, 'addBefore').onFree {bus.free};

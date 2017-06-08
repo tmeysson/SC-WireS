@@ -59,7 +59,7 @@ Wires_Var : Wires_InnerNode {
 	}
 
 	date {|parent|
-		^date[parent]
+		^date[parent];
 	}
 
 	incRefs {|parent, qt|

@@ -1,7 +1,7 @@
 // CLASSE D'INTERFACE DE WIRES
 Wires {
 	// l'ensemble des instances
-	classvar instances;
+	classvar <instances;
 	// verrou d'initialisation
 	classvar setupLock;
 	// le groupe parallèle de base
@@ -17,7 +17,7 @@ Wires {
 		setupLock = Semaphore();
 	}
 
-	*new {|volume = 0.25, typeWeights, delay = 2, randTime = 0.0, numNodes = #[40, 10], debug = false|
+	*new {|volume = 0.25, typeWeights, delay = 2, randTime = 0.0, numNodes = #[40, 10, 2], debug = false|
 		^super.new.wiresInit(volume, typeWeights, delay, randTime, numNodes, debug);
 	}
 
@@ -38,7 +38,8 @@ Wires {
 				};
 				Server.default.sync;
 			} {setupLock.signal};
-			root = Wires_OutNode(volume, typeWeights, numNodes);
+			root = Wires_OutNode(volume, typeWeights,
+				if (instances.isEmpty) {numNodes[0..1]++[0]} {numNodes});
 			instances.add(this);
 			{
 				/*

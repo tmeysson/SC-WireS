@@ -9,6 +9,8 @@ Wires_Def : SynthDef {
 	classvar <outDef;
 	// les SynthDef de transition
 	classvar transDefs;
+	// la SynthDef de réinjection
+	classvar <feedbackDef;
 
 	// la définition et les arguments
 	var synthDef, <synthArgs;
@@ -124,6 +126,12 @@ Wires_Def : SynthDef {
 				})
 			}
 		};
+
+		if (feedbackDef.isNil) {
+			feedbackDef = SynthDef('wires-feedback', {|out, in|
+				Out.ar(out, InFeedback.ar(in));
+			});
+		}
 	}
 
 	*addDefs {
@@ -131,13 +139,15 @@ Wires_Def : SynthDef {
 		defs.do{|type| type.flat.do(_.add)};
 		outDef.add;
 		transDefs.do(_.add);
+		feedbackDef.add;
 	}
 
 	*removeDefs {
 		// supprimer les définitions
 		defs.do{|type| type.flat.do(_.remove)};
-		outDef.remove;
+		if (outDef.notNil) {outDef.remove};
 		transDefs.do {|def| SynthDef.removeAt(def.name)};
+		if (feedbackDef.notNil) {SynthDef.removeAt(feedbackDef.name)};
 	}
 
 	remove { SynthDef.removeAt(name) }
@@ -183,7 +193,7 @@ Wires_Def : SynthDef {
 		nbSubs = [0, 1];
 	}
 
-	*randDef {|rate, typeWeights, maxK, maxA|
+	*randDef {|rate, typeWeights, maxK, maxA, maxFB|
 		var minA;
 		var minK;
 		var subSet;
@@ -191,10 +201,10 @@ Wires_Def : SynthDef {
 
 		#minA, minK = if(maxA > 0)
 		{[1, 0]}
-		{[0, if(maxK > 0) {1} {0}]};
+		{[maxFB, if(maxK > 0) {1} {0}]};
 
 		subSet = defs[rate][minK..maxK];
-		if (rate == 'audio') {subSet = subSet.collect {|tab| tab[minA..maxA]}};
+		if (rate == 'audio') {subSet = subSet.collect {|tab| tab[minA..maxA+maxFB]}};
 
 		subSet = subSet.flat;
 		weights = subSet.collect {|def| def.weight * typeWeights[def.type]}.normalizeSum;

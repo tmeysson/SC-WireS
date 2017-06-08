@@ -12,6 +12,8 @@ Wires_OutNode : Wires_Node {
 		def = Wires_Def.outDef;
 		// créer les arguments
 		this.makeArgs(def, Wires.baseGroup);
+		// enregistrer le Bus d'entrée
+		outBus = args[1];
 		// ajouter le volume
 		args = [vol: volume] ++ args;
 		// créer le Synth
