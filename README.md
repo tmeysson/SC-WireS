@@ -1,9 +1,9 @@
 # SC-WireS
-WireS random audio graph generator (SuperCollider extension)
+*** WireS random audio graph generator (SuperCollider extension)
 
-WireS: Générateur aléatoire de graphe audio (extension SuperCollider)
+*** WireS: Générateur aléatoire de graphe audio (extension SuperCollider)
 
-License: GPL V2
+*** Licence: GPL V2
 
 WireS génère un ou plusieurs graphes audio aléatoires, suivant un ensemble de définitions donnés dans la bibliothèque associée.
 
@@ -13,7 +13,7 @@ Une classe d'interface Wires permet d'effectuer les opérations habituelles (voi
 
 A FAIRE: documentation SCHelp
 
-Principe de fonctionnement:
+*** Principe de fonctionnement:
 
 Les noeuds de sortie sont de type audio.
 
@@ -30,7 +30,7 @@ Le contenu des graphes est renouvellé periodiquement, par une fonction récursi
 
 Chaque graphe est diffusé en stéréo selon un Pan qui évolue de façon aléatoire.
 
-Installation:
+*** Installation:
 
 Installer l'extension dans le répertoire des extensions (utilisateur ou global) de SuperCollider.
 
