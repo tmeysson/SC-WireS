@@ -1,47 +1,29 @@
-// démarrer 5 synthétiseurs en rotation
-(
-Wires_Def.makeDefs(true).makeWeights.addDefs;
-g = Array.newClear(5);
-r = Routine {
-	{
-		5.do {|i|
-			g[i] = Wires_Node.out;
-			g[i+1%5] !? (_.release);
-			1.wait;
-		}
-	}.loop;
-}.play;
-)
-
-// arrêter
-r.stop; g.do(_.release);
-
-// renouvellement automatique
-(
-Wires_Def.makeDefs(true).makeWeights.addDefs;
-g = Wires_Node.out;
-r = Routine {
-	{
-		2.wait;
-		g.renew((rand(1.0) ** 2) * (g.numNodes - 1) + 1);
-	}.loop;
-}.play;
-)
-
-// arrêter
-r.stop; g.release;
-
-// idem par l'interface
-w = Wires(0 ,typeWeights: [1, 1, 1, 1], numNodes: [10, 4, 2], debug: true);
-w.stop;
-
+// choisir un type de serveur
+// a priori, supernova est plus efficace (une optimisation est mise en place)
 Server.program;
 Server.supernova;
 Server.scsynth;
 
-// ensemble de graphes
-Wires.multi(5, 0.075, typeWeights: [1, 1, 1, 1], numNodes: [10, 4, 2], debug: true);
-Wires.stopAll;
+// démarrer un graphe par l'interface
+// silencieux si volume = 0
+w = Wires(volume: 0 ,typeWeights: [1, 1, 1, 1], numNodes: [10, 4, 2], debug: true);
+// arrêter le graphe
+w.stop;
 
-Wires.instances.size.postln;
-{Server.default.sync; 5.postln;}.fork;
+// ensemble de graphes
+// paramètres:
+// num: nombre de graphes
+// volume: volume de chaque graphe (à régler suivant le contexte, valeur basse le plus souvent)
+// typeWeights: poids de probabilité de chaque catégorie de noeud
+//   - oscillateurs
+//   - opérations algébriques
+//   - constante numérique
+//   - générateur de séquence
+// numNodes: nombre de noeuds des graphes (par catégorie)
+//   - noeuds de contrôle
+//   - noeuds audio
+//   - noeuds de réinjection
+//  debug: afficher des informations sur le nombre de Synths et de Bus, et le nombre de noeuds estimé
+Wires.multi(num: 5, volume: 0.075, typeWeights: [1, 1, 1, 1], numNodes: [10, 4, 2], debug: true);
+// arrêter toutes les instances
+Wires.stopAll;
