@@ -18,7 +18,7 @@ Wires_FeedBackNode : Wires_Node {
 		// il n'y a pas de sous-noeuds
 		subNodes = [];
 		// définition
-		def = Wires_Def.feedbackDefs.choose;
+		def = Wires_Def.feedbackDefs[[0.1,0.9].windex];
 		// créer le Bus de sortie
 		outBus = Bus.alloc('audio');
 		// créer l'argument
