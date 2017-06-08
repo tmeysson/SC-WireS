@@ -9,8 +9,8 @@ Wires_Def : SynthDef {
 	classvar <outDef;
 	// les SynthDef de transition
 	classvar transDefs;
-	// la SynthDef de réinjection
-	classvar <feedbackDef;
+	// les SynthDef de réinjection
+	classvar <feedbackDefs;
 
 	// la définition et les arguments
 	var synthDef, <synthArgs;
@@ -127,10 +127,16 @@ Wires_Def : SynthDef {
 			}
 		};
 
-		if (feedbackDef.isNil) {
-			feedbackDef = SynthDef('wires-feedback', {|out, in|
-				Out.ar(out, InFeedback.ar(in));
-			});
+		if (feedbackDefs.isNil) {
+			feedbackDefs = [
+				SynthDef('wires-feedback', {|out, in|
+					Out.ar(out, InFeedback.ar(in));
+				}),
+				SynthDef('wires-feedback', {|out, in|
+					var delay = Rand(0, 4);
+					Out.ar(out, DelayN.ar(InFeedback.ar(in), delay, delay));
+				})
+			];
 		}
 	}
 
@@ -139,7 +145,7 @@ Wires_Def : SynthDef {
 		defs.do{|type| type.flat.do(_.add)};
 		outDef.add;
 		transDefs.do(_.add);
-		feedbackDef.add;
+		feedbackDefs.do(_.add);
 	}
 
 	*removeDefs {
@@ -147,7 +153,7 @@ Wires_Def : SynthDef {
 		defs.do{|type| type.flat.do(_.remove)};
 		if (outDef.notNil) {outDef.remove};
 		transDefs.do {|def| SynthDef.removeAt(def.name)};
-		if (feedbackDef.notNil) {SynthDef.removeAt(feedbackDef.name)};
+		feedbackDefs.do {|def| SynthDef.removeAt(def.name)};
 	}
 
 	remove { SynthDef.removeAt(name) }
