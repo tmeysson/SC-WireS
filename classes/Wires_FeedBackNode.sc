@@ -1,6 +1,10 @@
 Wires_FeedBackNode : Wires_Node {
 	*new {|depth = 0, target, varLevel = 0, typeWeights, parent, quota|
-		^super.new(typeWeights, quota).feedbackNodeInit(depth, target, varLevel);
+		if (Wires.instances.isEmpty.not) {
+			^super.new(typeWeights, quota).feedbackNodeInit(depth, target, varLevel);
+		} {
+			^Wires_InnerNode('audio', depth, target, varLevel, typeWeights, parent, quota);
+		};
 	}
 
 	feedbackNodeInit {|dpth, target, level|
