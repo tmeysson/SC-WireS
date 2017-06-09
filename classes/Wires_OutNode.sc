@@ -1,4 +1,6 @@
 Wires_OutNode : Wires_Node {
+	var <inBus;
+
 	*new {|volume = 0.25, typeWeights, quota|
 		^super.new(typeWeights, quota).outNodeInit(volume);
 	}
@@ -13,7 +15,7 @@ Wires_OutNode : Wires_Node {
 		// créer les arguments
 		this.makeArgs(def, Wires.baseGroup);
 		// enregistrer le Bus d'entrée
-		outBus = args[1];
+		inBus = args[1];
 		// ajouter le volume
 		args = [vol: volume] ++ args;
 		// créer le Synth

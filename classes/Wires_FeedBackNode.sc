@@ -22,7 +22,7 @@ Wires_FeedBackNode : Wires_Node {
 		// créer le Bus de sortie
 		outBus = Bus.alloc('audio');
 		// créer l'argument
-		in = [in: Wires.instances.choose.root.outBus];
+		in = [in: Wires.instances.choose.root.inBus];
 		// ajouter le volume
 		args = [out: outBus, in: in];
 		// créer le Synth
