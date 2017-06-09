@@ -23,17 +23,4 @@ Wires_OutNode : Wires_Node {
 		// libérer le sous-graphe à la fin
 		synth.onFree {isRunning = false; this.free};
 	}
-
-	free {|parent|
-		{
-			// section vérouillée
-			lock.wait;
-			if (isRunning) {synth.free; isRunning = false};
-			subNodes.do {|node| node[1].free(this) };
-			if (subGroup.notNil) {subGroup.free};
-			if (group.notNil) {group.free};
-			// fin du verrou
-			lock.signal;
-		}.forkIfNeeded;
-	}
 }
