@@ -8,7 +8,7 @@ Wires_Node {
 	// le Group
 	var group;
 	// le groupe des sous-noeuds
-	var subGroup;
+	var <subGroup;
 	// le Bus de sortie
 	var <outBus;
 	// la profondeur
@@ -21,8 +21,6 @@ Wires_Node {
 	var <numNodes;
 	// la date de création
 	var <date;
-	// le verrou de renouvellement
-	var lock;
 	// le niveau de variable ciblé
 	var varLevel;
 
@@ -39,8 +37,6 @@ Wires_Node {
 		quota = qt;
 		// activer le noeud
 		isRunning = true;
-		// initialiser le verrou
-		lock = Semaphore();
 	}
 
 	makeArgs {|def, target|
@@ -117,66 +113,57 @@ Wires_Node {
 		synth = Synth(def.name, args, target, 'addToTail');
 	}
 
-	renew {|num|
-		var index, select, node;
-		{
-			// section vérouillée
-			lock.wait;
-			if (num < 1) {num = 1};
-			index = subNodes.minIndex {|it| it[1].date(this) + rand(1.0)};
+	renew {|minQt, delta, parent|
+		var res;
+		var panel;
+		// tableau des indices des sous-noeuds qui honorent le minimum
+		panel = subNodes.collect {|n, i| [i, (n[1].quota(this) - minQt).every(_>=0)] }.select(_[1]);
+		if (panel.isEmpty) {
+			// renouveller ce noeud
+			^this.replace(delta, parent);
+		} {
+			var index, select, node;
+			var newNode;
+			// choisir un des sous-noeuds
+			index = panel.choose[0];
 			select = subNodes[index];
 			node = select[1];
-			if (node.numNodes <= num)
-			// remplacer le noeud
-			{
+			newNode = node.renew(minQt, delta, this);
+			if (newNode != node) {
 				// effectuer la transition
-				var rate, new, bus;
-				rate = node.outBus.rate;
-				subNodes[index][1] = new = case
-				{node.isKindOf(Wires_InnerNode)}
+				var bus, rate;
+				subNodes[index][1] = newNode;
 				{
-					Wires_InnerNode(rate, depth + 1, subGroup, varLevel, typeWeights,
-					this, node.quota(this))
-				}
-				{node.isKindOf(Wires_FeedBackNode)}
-				{
-					Wires_FeedBackNode(depth + 1, subGroup, varLevel, typeWeights,
-					this, node.quota(this))
-				};
-				bus = Bus.alloc(rate);
-				Synth("wires-trans-%".format(rate).asSymbol,
-					[out: bus, in1: node.outBus, in2: new.outBus], synth, 'addBefore').onFree {bus.free};
-				synth.set(select[0], bus);
-				numNodes = numNodes - node.numNodes + new.numNodes;
-				// attendre la fin de la transition
-				1.wait;
-				// terminer la transition
-				synth.set(select[0], new.outBus);
-				node.free;
-			}
-			// propager la requête
-			{
-				numNodes = numNodes - node.numNodes;
-				node.renew(num);
-				numNodes = numNodes + node.numNodes;
+					rate = node.outBus.rate;
+					bus = Bus.alloc(rate);
+					Synth("wires-trans-%".format(rate).asSymbol,
+						[out: bus, in1: node.outBus, in2: newNode.outBus],
+						synth, 'addBefore').onFree {bus.free};
+					synth.set(select[0], bus);
+					// attendre la fin de la transition
+					1.wait;
+					// terminer la transition
+					synth.set(select[0], newNode.outBus);
+					node.free;
+				}.fork;
 			};
-			// fin du verrou
-			lock.signal;
-		}.forkIfNeeded;
+			// appliquer le différentiel
+			this.updateQuota(delta, parent);
+			// retourner le noeud courant
+			^this;
+		};
+	}
+
+	updateQuota {|delta|
+		quota = quota + delta;
 	}
 
 	free {|parent|
-		{
-			// section vérouillée
-			lock.wait;
-			if (isRunning) {synth.free; isRunning = false};
-			if (outBus.notNil) {outBus.free};
-			subNodes.do {|node| node[1].free(this) };
-			if (subGroup.notNil) {subGroup.free};
-			if (group.notNil) {group.free};
-			// fin du verrou
-			lock.signal;
-		}.forkIfNeeded;
+		if (isRunning) {synth.free; isRunning = false};
+		if (outBus.notNil) {outBus.free};
+		subNodes.do {|node| node[1].free(this) };
+		if (subGroup.notNil) {subGroup.free};
+		if (group.notNil) {group.free};
 	}
 
 	release {

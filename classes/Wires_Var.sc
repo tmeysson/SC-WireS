@@ -53,9 +53,17 @@ Wires_Var : Wires_InnerNode {
 		date = Dictionary().put(parent, date);
 	}
 
+	replace {|delta, parent|
+		^Wires_InnerNode(outBus.rate, depth, parent.subGroup, varLevel-1, typeWeights,
+			parent, this.quota(parent) + delta);
+	}
+
 	quota {|parent|
-		// ^quota.values.reduce('max');
 		^quota[parent];
+	}
+
+	updateQuota {|delta, parent|
+		^quota[parent] = quota[parent] + delta;
 	}
 
 	date {|parent|

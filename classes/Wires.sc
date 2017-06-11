@@ -4,6 +4,8 @@ Wires {
 	classvar <instances;
 	// verrou d'initialisation
 	classvar setupLock;
+	// verrou de renouvellement
+	classvar renewLock;
 	// le groupe parallèle de base
 	classvar <baseGroup;
 
@@ -15,6 +17,7 @@ Wires {
 	*initClass {
 		instances = List();
 		setupLock = Semaphore();
+		renewLock = Semaphore();
 	}
 
 	*new {|volume = 0.25, typeWeights, delay = 2, randTime = 0.0, numNodes = #[40, 10, 2], debug = false|
@@ -41,10 +44,6 @@ Wires {
 			root = Wires_OutNode(volume, typeWeights, numNodes);
 			instances.add(this);
 			{
-				/*
-				// ne fonctionne pas avec plusieurs Wires en parallèle
-				if (numNodes != numSynths) {root.countNodes(update: true)};
-				*/
 				root.countNodes(update: true);
 				if (debug) {
 					var numSynths = Server.default.numSynths;
@@ -54,7 +53,11 @@ Wires {
 						Server.default.controlBusAllocator.blocks.size,
 						numSynths, numNodes.round(0.01)).postln;
 				};
-				{root.renew(2 ** rand(log2(root.numNodes) / 0.95))}.fork;
+				{
+					renewLock.wait;
+					root.renew(({1.0.rand}!3) * (numNodes - [0, 1, 0]), [0,0,0], nil);
+					renewLock.signal;
+				}.fork;
 				(delay * (2 ** rand(randTime))).wait;
 			}.loop;
 		}.play;
@@ -71,9 +74,13 @@ Wires {
 	}
 
 	stop {
-		renew.stop;
-		root.release;
-		instances.remove(this);
+		{
+			renewLock.wait;
+			renew.stop;
+			root.release;
+			instances.remove(this);
+			renewLock.signal;
+		}.fork;
 	}
 
 	*stopAll {

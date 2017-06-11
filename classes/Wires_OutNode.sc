@@ -23,4 +23,35 @@ Wires_OutNode : Wires_Node {
 		// libérer le sous-graphe à la fin
 		synth.onFree {isRunning = false; this.free};
 	}
+
+	renew {|minQt, delta, parent = nil|
+		var select, node;
+		var newNode;
+		// choisir le sous-noeud
+		select = subNodes[0];
+		node = select[1];
+		newNode = node.renew(minQt, delta, this);
+		if (newNode != node) {
+			// effectuer la transition
+			var bus, rate;
+			subNodes[0][1] = newNode;
+			{
+				rate = node.outBus.rate;
+				bus = Bus.alloc(rate);
+				Synth("wires-trans-%".format(rate).asSymbol,
+					[out: bus, in1: node.outBus, in2: newNode.outBus],
+					synth, 'addBefore').onFree {bus.free};
+				synth.set(select[0], bus);
+				// attendre la fin de la transition
+				1.wait;
+				// terminer la transition
+				synth.set(select[0], newNode.outBus);
+				node.free;
+			}.fork;
+		};
+		// appliquer le différentiel
+		this.updateQuota(delta, parent);
+		// retourner le noeud courant
+		^this;
+	}
 }
