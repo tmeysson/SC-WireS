@@ -20,11 +20,13 @@ Wires {
 		renewLock = Semaphore();
 	}
 
-	*new {|volume = 0.25, typeWeights, delay = 2, randTime = 0.0, numNodes = #[40, 10, 2], debug = false|
-		^super.new.wiresInit(volume, typeWeights, delay, randTime, numNodes, debug);
+	*new {|volume = 0.25, typeWeights, delay = 2, randTime = 0.0,
+		numNodes = #[40, 10, 2], randNumNodes = 0, debug = false|
+		^super.new.wiresInit(volume, typeWeights, delay, randTime, numNodes, randNumNodes, debug);
 	}
 
-	wiresInit {|volume, typeWeights, dt, rt, numNodes, debug|
+	wiresInit {|volume, typeWeights, dt, rt, numNodes, randNumNodes, debug|
+		var curNumNodes = numNodes;
 		delay = dt;
 		randTime = rt;
 
@@ -54,8 +56,13 @@ Wires {
 						numSynths, numNodes.round(0.01)).postln;
 				};
 				{
+					var newNumNodes, delta;
 					renewLock.wait;
-					root.renew(({1.0.rand}!3) * (numNodes - [0, 1, 0]), [0,0,0], nil);
+					newNumNodes = (numNodes * (({randNumNodes.rand2}!2 + 1)++[1])).round.max([0,2,0]);
+					delta = (newNumNodes - curNumNodes).asInteger;
+					root.renew((({1.0.rand}!3) * (curNumNodes - [0, 1, 0])).round.max(delta.neg),
+						delta, nil);
+					curNumNodes = newNumNodes;
 					renewLock.signal;
 				}.fork;
 				(delay * (2 ** rand(randTime))).wait;
@@ -63,11 +70,11 @@ Wires {
 		}.play;
 	}
 
-	*multi {|num = 0, volume = 0.25, typeWeights, numNodes, debug = false|
+	*multi {|num = 0, volume = 0.25, typeWeights, numNodes, randNumNodes, debug = false|
 		Routine {
 			num.do {
-				this.new(volume: volume, numNodes: numNodes, typeWeights: typeWeights,
-					randTime: 1.0, debug: debug);
+				this.new(volume: volume, numNodes: numNodes, randNumNodes: randNumNodes,
+					typeWeights: typeWeights, randTime: 1.0, debug: debug);
 				debug = false; 1.wait;
 			};
 		}.play;
