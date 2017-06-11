@@ -14,7 +14,7 @@ Wires_FeedBackNode : Wires_Node {
 		// niveau de variable
 		varLevel = level;
 		// nombre de noeuds
-		numNodes = 0;
+		numNodes = 1;
 		// il n'y a pas de sous-noeuds
 		subNodes = [];
 		// définition
