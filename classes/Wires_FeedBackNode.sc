@@ -29,8 +29,8 @@ Wires_FeedBackNode : Wires_Node {
 		this.makeSynth(target);
 	}
 
-	replace {|delta, parent|
+	replace {|parent|
 		^Wires_FeedBackNode(depth, parent.subGroup, varLevel, typeWeights,
-			parent, quota + delta);
+			parent, quota);
 	}
 }
