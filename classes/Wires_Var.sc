@@ -6,6 +6,8 @@ Wires_Var : Wires_InnerNode {
 
 	// le nombre de références
 	var refs;
+	// le quota courant
+	var curQuota;
 
 	*initClass {
 		levels = List();
@@ -49,13 +51,14 @@ Wires_Var : Wires_InnerNode {
 		// ajouter dans les variables
 		levels[varLevel-1][outBus.rate].add(this);
 		// enregistrer le quota et la date initiales
+		curQuota = quota;
 		quota = Dictionary().put(parent, quota);
 		date = Dictionary().put(parent, date);
 	}
 
-	replace {|delta, parent|
+	replace {|parent|
 		^Wires_InnerNode(outBus.rate, depth, parent.subGroup, varLevel-1, typeWeights,
-			parent, this.quota(parent) + delta);
+			parent, curQuota);
 	}
 
 	quota {|parent|
@@ -63,7 +66,10 @@ Wires_Var : Wires_InnerNode {
 	}
 
 	updateQuota {|delta, parent|
-		^quota[parent] = quota[parent] + delta;
+		var oldQuota = curQuota;
+		quota[parent] = quota[parent] + delta;
+		curQuota = quota.values.reduce('max');
+		^(curQuota - oldQuota);
 	}
 
 	date {|parent|

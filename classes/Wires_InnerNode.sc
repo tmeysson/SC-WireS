@@ -22,8 +22,8 @@ Wires_InnerNode : Wires_Node {
 		this.makeSynth(group ? target);
 	}
 
-	replace {|delta, parent|
+	replace {|parent|
 		^Wires_InnerNode(outBus.rate, depth, parent.subGroup, varLevel, typeWeights,
-			parent, this.quota(parent) + delta);
+			parent, quota);
 	}
 }

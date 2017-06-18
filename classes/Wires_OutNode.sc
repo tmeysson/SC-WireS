@@ -27,10 +27,12 @@ Wires_OutNode : Wires_Node {
 	renew {|minQt, delta, parent = nil|
 		var select, node;
 		var newNode;
+		// appliquer le différentiel
+		var newDelta = this.updateQuota(delta, parent);
 		// choisir le sous-noeud
 		select = subNodes[0];
 		node = select[1];
-		newNode = node.renew(minQt, delta, this);
+		newNode = node.renew(minQt, newDelta, this);
 		if (newNode != node) {
 			// effectuer la transition
 			var bus, rate;
@@ -49,8 +51,6 @@ Wires_OutNode : Wires_Node {
 				node.free;
 			}.fork;
 		};
-		// appliquer le différentiel
-		this.updateQuota(delta, parent);
 		// retourner le noeud courant
 		^this;
 	}
