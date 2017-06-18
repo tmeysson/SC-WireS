@@ -186,11 +186,19 @@ Wires_Def : SynthDef {
 	}
 
 	*out {
-		^super.new('wires-out', {|vol = 0.25, p0, gate = 1|
-			Out.ar(0, Pan2.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(p0),
-				DemandEnvGen.kr(Dwhite(-1, 1), 2 ** Dwhite(0, 6))
-			))
-		}).outDefInit;
+		if (UGen.findMethod('antiPok').notNil) {
+			^super.new('wires-out', {|vol = 0.25, p0, gate = 1|
+				Out.ar(0, Pan2.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(p0).antiPok,
+					DemandEnvGen.kr(Dwhite(-1, 1), 2 ** Dwhite(0, 6))
+				))
+			}).outDefInit;
+		} {
+			^super.new('wires-out', {|vol = 0.25, p0, gate = 1|
+				Out.ar(0, Pan2.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(p0),
+					DemandEnvGen.kr(Dwhite(-1, 1), 2 ** Dwhite(0, 6))
+				))
+			}).outDefInit;
+		};
 	}
 
 	outDefInit {
