@@ -21,16 +21,49 @@ Wires {
 	}
 
 	*new {|volume = 0.25, typeWeights, delay = 2, randTime = 0.0,
-		numNodes = #[40, 10, 2], randNumNodes = 0, debug = false|
-		^super.new.wiresInit(volume, typeWeights, delay, randTime, numNodes, randNumNodes, debug);
+		numNodes = #[40, 10, 2], randNumNodes = 0, numNodeCycle = nil, debug = false|
+		^super.new.wiresInit(volume, typeWeights, delay, randTime, numNodes,
+			randNumNodes, numNodeCycle, debug);
 	}
 
-	wiresInit {|volume, typeWeights, dt, rt, numNodes, randNumNodes, debug|
+	wiresInit {|volume, typeWeights, dt, rt, numNodes, randNumNodes, numNodeCycle, debug|
 		var curNumNodes = numNodes;
+		var cycleDiff, cycleTime, cycleFunc;
+		if (numNodeCycle.notNil) {
+			# cycleDiff, cycleTime = numNodeCycle;
+			cycleDiff = cycleDiff - numNodes;
+			cycleFunc = {|t| numNodes + (cycleDiff*(t/cycleTime).fold(0,1)).round.asInteger};
+		};
 		delay = dt;
 		randTime = rt;
 
 		renew = Routine {
+			var time = 0;
+			var renewFunc = if (numNodeCycle.notNil)
+			{
+				{
+					var newNumNodes, delta;
+					renewLock.wait;
+					newNumNodes = cycleFunc.(time);
+					delta = newNumNodes - curNumNodes;
+					root.renew((({1.0.rand}!3) * (curNumNodes - [0, 1, 0])).round.max(delta.neg),
+						delta, nil);
+					curNumNodes = newNumNodes;
+					time = time + 1;
+					renewLock.signal;
+				};
+			} {
+				{
+					var newNumNodes, delta;
+					renewLock.wait;
+					newNumNodes = (numNodes * (({randNumNodes.rand2}!2 + 1)++[1])).round.max([0,2,0]);
+					delta = (newNumNodes - curNumNodes).asInteger;
+					root.renew((({1.0.rand}!3) * (curNumNodes - [0, 1, 0])).round.max(delta.neg),
+						delta, nil);
+					curNumNodes = newNumNodes;
+					renewLock.signal;
+				}
+			};
 			protect {
 				setupLock.wait;
 				Server.default.bootSync;
@@ -55,25 +88,17 @@ Wires {
 						Server.default.controlBusAllocator.blocks.size,
 						numSynths, numNodes.round(0.01)).postln;
 				};
-				{
-					var newNumNodes, delta;
-					renewLock.wait;
-					newNumNodes = (numNodes * (({randNumNodes.rand2}!2 + 1)++[1])).round.max([0,2,0]);
-					delta = (newNumNodes - curNumNodes).asInteger;
-					root.renew((({1.0.rand}!3) * (curNumNodes - [0, 1, 0])).round.max(delta.neg),
-						delta, nil);
-					curNumNodes = newNumNodes;
-					renewLock.signal;
-				}.fork;
+				renewFunc.fork;
 				(delay * (2 ** rand(randTime))).wait;
 			}.loop;
 		}.play;
 	}
 
-	*multi {|num = 0, volume = 0.25, typeWeights, numNodes, randNumNodes, debug = false|
+	*multi {|num = 0, volume = 0.25, typeWeights, numNodes, randNumNodes, numNodeCycle, debug = false|
 		Routine {
 			num.do {
-				this.new(volume: volume, numNodes: numNodes, randNumNodes: randNumNodes,
+				this.new(volume: volume, numNodes: numNodes,
+					randNumNodes: randNumNodes, numNodeCycle: numNodeCycle,
 					typeWeights: typeWeights, randTime: 1.0, debug: debug);
 				debug = false; 1.wait;
 			};
