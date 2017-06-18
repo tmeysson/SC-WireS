@@ -39,7 +39,7 @@ Wires_OutNode : Wires_Node {
 				rate = node.outBus.rate;
 				bus = Bus.alloc(rate);
 				Synth("wires-trans-%".format(rate).asSymbol,
-					[out: bus, in1: node.outBus, in2: newNode.outBus].postln,
+					[out: bus, in1: node.outBus, in2: newNode.outBus],
 					synth, 'addBefore').onFree {bus.free};
 				synth.set(select[0], bus);
 				// attendre la fin de la transition
