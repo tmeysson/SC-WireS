@@ -21,7 +21,7 @@ Wires {
 	}
 
 	*new {|volume = 0.25, typeWeights, delay = 2, randTime = 0.0,
-		numNodes = #[40, 10, 2], randNumNodes = 0, numNodeCycle = nil, debug = false|
+		numNodes = #[40, 10, 2], randNumNodes = 0, numNodeCycle = nil, debug = 0|
 		^super.new.wiresInit(volume, typeWeights, delay, randTime, numNodes,
 			randNumNodes, numNodeCycle, debug);
 	}
@@ -80,13 +80,13 @@ Wires {
 			instances.add(this);
 			{
 				root.countNodes(update: true);
-				if (debug) {
+				if (debug.bitTest(0)) {
 					var numSynths = Server.default.numSynths;
-					var numNodes = instances.sum{|elt| elt.root.numNodes};
+					var countedNodes = instances.sum{|elt| elt.root.numNodes};
 					"Busses: %, Synths: %, NumNodes: %"
 					.format(Server.default.audioBusAllocator.blocks.size +
 						Server.default.controlBusAllocator.blocks.size,
-						numSynths, numNodes.round(0.01)).postln;
+						numSynths, countedNodes.round(0.01)).postln;
 				};
 				renewFunc.fork;
 				(delay * (2 ** rand(randTime))).wait;
@@ -94,13 +94,13 @@ Wires {
 		}.play;
 	}
 
-	*multi {|num = 0, volume = 0.25, typeWeights, numNodes, randNumNodes, numNodeCycle, debug = false|
+	*multi {|num = 0, volume = 0.25, typeWeights, numNodes, randNumNodes, numNodeCycle, debug = 0|
 		Routine {
 			num.do {
 				this.new(volume: volume, numNodes: numNodes,
 					randNumNodes: randNumNodes, numNodeCycle: numNodeCycle,
 					typeWeights: typeWeights, randTime: 1.0, debug: debug);
-				debug = false; 1.wait;
+				debug = 0; 1.wait;
 			};
 		}.play;
 	}
