@@ -11,6 +11,8 @@ Wires_Def : SynthDef {
 	classvar transDefs;
 	// les SynthDef de réinjection
 	classvar <feedbackDefs;
+	// les définitions par défaut
+	classvar defaultDefs;
 
 	// la définition et les arguments
 	var synthDef, <synthArgs;
@@ -132,12 +134,14 @@ Wires_Def : SynthDef {
 				SynthDef('wires-feedback', {|out, in|
 					Out.ar(out, InFeedback.ar(in));
 				}),
-				SynthDef('wires-feedback', {|out, in|
+				SynthDef('wires-feedback-delay', {|out, in|
 					var delay = Rand(0, 4);
 					Out.ar(out, DelayN.ar(InFeedback.ar(in), delay, delay));
 				})
 			];
-		}
+		};
+
+		if (defaultDefs.isNil) {defaultDefs = this.defaults};
 	}
 
 	*addDefs {
@@ -146,6 +150,7 @@ Wires_Def : SynthDef {
 		outDef.add;
 		transDefs.do(_.add);
 		feedbackDefs.do(_.add);
+		defaultDefs.do(_.add);
 	}
 
 	*removeDefs {
@@ -206,11 +211,26 @@ Wires_Def : SynthDef {
 		nbSubs = [0, 1];
 	}
 
+	*defaults {
+		^Dictionary.newFrom([
+			audio: super.new('wires-default-audio', {|out|
+				Out.ar(out, Silent.ar)}).defaultDefInit,
+			control: super.new('wires-default-control', {|out|
+				Out.kr(out, DC.kr(0))}).defaultDefInit
+		]);
+	}
+
+	defaultDefInit {
+		synthArgs = [];
+		nbSubs = [0, 0];
+	}
+
 	*randDef {|rate, typeWeights, maxK, maxA, maxFB|
 		var minA;
 		var minK;
 		var subSet;
 		var weights;
+		var res;
 
 		#minA, minK = if(maxA > 0)
 		{[1, 0]}
@@ -221,6 +241,11 @@ Wires_Def : SynthDef {
 
 		subSet = subSet.flat;
 		weights = subSet.collect {|def| def.weight * typeWeights[def.type]}.normalizeSum;
-		^subSet[weights.windex];
+		res = subSet[weights.windex];
+		if (res.notNil) {^res}
+		{
+			"WARNING: no Wires_Def of signature [%, %, %]".format(maxK, maxA, maxFB).postln;
+			^defaultDefs[rate];
+		};
 	}
 }
