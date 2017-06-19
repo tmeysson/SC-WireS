@@ -27,6 +27,9 @@ Wires_FeedBackNode : Wires_Node {
 		args = [out: outBus, in: in];
 		// créer le Synth
 		this.makeSynth(target);
+		synth.onFree {
+			isRunning = false;
+		};
 	}
 
 	replace {|parent|

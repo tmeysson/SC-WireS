@@ -20,6 +20,9 @@ Wires_InnerNode : Wires_Node {
 		args = [out: outBus] ++ args;
 		// créer le Synth
 		this.makeSynth(group ? target);
+		synth.onFree {
+			isRunning = false;
+		};
 	}
 
 	replace {|parent|

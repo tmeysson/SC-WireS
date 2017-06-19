@@ -150,17 +150,17 @@ Wires_Node {
 				var bus, rate;
 				transNodes.add(node);
 				subNodes[index][1] = newNode;
+				rate = node.outBus.rate;
+				bus = Bus.alloc(rate);
+				Synth("wires-trans-%".format(rate).asSymbol,
+					[out: bus, in1: node.outBus, in2: newNode.outBus],
+					synth, 'addBefore').onFree {bus.free};
+				synth.set(select[0], bus);
 				{
-					rate = node.outBus.rate;
-					bus = Bus.alloc(rate);
-					Synth("wires-trans-%".format(rate).asSymbol,
-						[out: bus, in1: node.outBus, in2: newNode.outBus],
-						synth, 'addBefore').onFree {bus.free};
-					synth.set(select[0], bus);
 					// attendre la fin de la transition
 					1.wait;
 					// terminer la transition
-					synth.set(select[0], newNode.outBus);
+					if (isRunning) {synth.set(select[0], newNode.outBus)};
 					protect {
 						Wires.renewLock.wait;
 						node.free(this);
@@ -179,27 +179,29 @@ Wires_Node {
 	}
 
 	free {|parent|
-		if (isRunning) {synth.free; isRunning = false};
-		if (outBus.notNil) {outBus.free};
 		subNodes.do {|node| node[1].free(this) };
-		if (subGroup.notNil) {subGroup.free};
-		if (group.notNil) {group.free};
+		if (isRunning) {
+			synth.free;/* isRunning = false;*/
+			if (subGroup.notNil) {subGroup.free};
+			if (group.notNil) {group.free};
+		};
+		if (outBus.notNil) {outBus.free};
 		allNodes.remove(this);
 	}
 
 	freeStray {
 		if (isRunning) {
-			synth.free; isRunning = false;
-			if (outBus.notNil) {outBus.free};
+			synth.free;/* isRunning = false;*/
 			if (subGroup.notNil) {subGroup.free};
 			if (group.notNil) {group.free};
-			allNodes.remove(this);
 		};
+		if (outBus.notNil) {outBus.free};
+		allNodes.remove(this);
 	}
 
 	release {
 		synth.release;
-		while {synth.isRunning} {0.1.wait};
+		while {isRunning} {0.1.wait};
 	}
 
 	countNodes {|coeff = 1, update = false|

@@ -134,6 +134,8 @@ Wires {
 				renewLock.wait;
 				this.stopRenew;
 				this.freeAll;
+				// attendre que les Synths soient bien terminés
+				1.wait;
 			} {renewLock.signal};
 		}.fork;
 	}
@@ -145,6 +147,8 @@ Wires {
 				renewLock.wait;
 				curInstances.do(_.stopRenew);
 				curInstances.do(_.freeAll);
+				// attendre que les Synths soient bien terminés
+				1.wait;
 			} {renewLock.signal};
 		}.fork;
 	}
