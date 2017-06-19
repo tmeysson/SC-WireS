@@ -43,25 +43,27 @@ Wires {
 			{
 				{
 					var newNumNodes, delta;
-					renewLock.wait;
-					newNumNodes = cycleFunc.(time);
-					delta = newNumNodes - curNumNodes;
-					root.renew((({1.0.rand}!3) * (curNumNodes - [0, 1, 0])).round.max(delta.neg),
-						delta, nil);
-					curNumNodes = newNumNodes;
-					time = time + 1;
-					renewLock.signal;
+					protect {
+						renewLock.wait;
+						newNumNodes = cycleFunc.(time);
+						delta = newNumNodes - curNumNodes;
+						root.renew((({1.0.rand}!3) * (curNumNodes - [0, 1, 0])).round.max(delta.neg),
+							delta, nil);
+						curNumNodes = newNumNodes;
+						time = time + 1;
+					} {renewLock.signal};
 				};
 			} {
 				{
 					var newNumNodes, delta;
-					renewLock.wait;
-					newNumNodes = (numNodes * (({randNumNodes.rand2}!2 + 1)++[1])).round.max([0,2,0]);
-					delta = (newNumNodes - curNumNodes).asInteger;
-					root.renew((({1.0.rand}!3) * (curNumNodes - [0, 1, 0])).round.max(delta.neg),
-						delta, nil);
-					curNumNodes = newNumNodes;
-					renewLock.signal;
+					protect {
+						renewLock.wait;
+						newNumNodes = (numNodes * (({randNumNodes.rand2}!2 + 1)++[1])).round.max([0,2,0]);
+						delta = (newNumNodes - curNumNodes).asInteger;
+						root.renew((({1.0.rand}!3) * (curNumNodes - [0, 1, 0])).round.max(delta.neg),
+							delta, nil);
+						curNumNodes = newNumNodes;
+					} {renewLock.signal};
 				}
 			};
 			protect {
@@ -107,11 +109,12 @@ Wires {
 
 	stop {
 		{
+			protect {
 			renewLock.wait;
 			renew.stop;
 			root.release;
 			instances.remove(this);
-			renewLock.signal;
+			} {renewLock.signal};
 		}.fork;
 	}
 
