@@ -118,8 +118,9 @@ Wires_Node {
 		var panel;
 		// appliquer le différentiel
 		var newDelta = this.updateQuota(delta, parent);
+		var newMinQt = minQt.max(newDelta.neg);
 		// tableau des indices des sous-noeuds qui honorent le minimum
-		panel = subNodes.collect {|n, i| [i, (n[1].quota(this) - minQt).every(_>=0)] }.select(_[1]);
+		panel = subNodes.collect {|n, i| [i, (n[1].quota(this) - newMinQt).every(_>=0)] }.select(_[1]);
 		if (panel.isEmpty) {
 			// renouveller ce noeud
 			^this.replace(parent);
@@ -130,7 +131,7 @@ Wires_Node {
 			index = panel.choose[0];
 			select = subNodes[index];
 			node = select[1];
-			newNode = node.renew(minQt, newDelta, this);
+			newNode = node.renew(newMinQt, newDelta, this);
 			if (newNode != node) {
 				// effectuer la transition
 				var bus, rate;

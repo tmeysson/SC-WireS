@@ -28,11 +28,13 @@ Wires_OutNode : Wires_Node {
 		var select, node;
 		var newNode;
 		// appliquer le différentiel
+		// NOTE: newDelta == delta et newMinQt == minQt, dans le cas d'un OutNode
 		var newDelta = this.updateQuota(delta, parent);
+		var newMinQt = minQt.max(newDelta.neg);
 		// choisir le sous-noeud
 		select = subNodes[0];
 		node = select[1];
-		newNode = node.renew(minQt, newDelta, this);
+		newNode = node.renew(newMinQt, newDelta, this);
 		if (newNode != node) {
 			// effectuer la transition
 			var bus, rate;
