@@ -123,15 +123,30 @@ Wires {
 	stop {
 		{
 			protect {
-			renewLock.wait;
-			renew.stop;
-			root.release;
-			instances.remove(this);
+				renewLock.wait;
+				this.stopRenew;
+				this.freeAll;
 			} {renewLock.signal};
 		}.fork;
 	}
 
 	*stopAll {
-		instances.copy.do(_.stop);
+		var curInstances = instances.copy;
+		{
+			protect {
+				renewLock.wait;
+				curInstances.do(_.stopRenew);
+				curInstances.do(_.freeAll);
+			} {renewLock.signal};
+		}.fork;
+	}
+
+	stopRenew {
+		renew.stop;
+	}
+
+	freeAll {
+		root.release;
+		instances.remove(this);
 	}
 }
