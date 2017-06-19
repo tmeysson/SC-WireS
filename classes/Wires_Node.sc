@@ -34,7 +34,7 @@ Wires_Node {
 		// poids des types
 		typeWeights = tWghts;
 		// le quota de noeuds
-		quota = qt;
+		quota = qt.copy;
 		// activer le noeud
 		isRunning = true;
 	}
