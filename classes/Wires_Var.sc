@@ -58,7 +58,7 @@ Wires_Var : Wires_InnerNode {
 
 	replace {|parent|
 		^Wires_InnerNode(outBus.rate, depth, parent.subGroup, varLevel-1, typeWeights,
-			parent, curQuota);
+			parent, quota[parent]);
 	}
 
 	quota {|parent|
