@@ -1,10 +1,15 @@
 Wires_Node {
+	// l'ensemble des noeuds existants
+	classvar <allNodes;
+
 	// la définition et les arguments
 	var def, args;
 	// le Synth et son état
 	var synth, isRunning;
 	// les sous-noeuds
 	var subNodes;
+	// les noeuds en cours de transition
+	var transNodes;
 	// le Group
 	var group;
 	// le groupe des sous-noeuds
@@ -24,6 +29,10 @@ Wires_Node {
 	// le niveau de variable ciblé
 	var varLevel;
 
+	*initClass {
+		allNodes = Set();
+	}
+
 	*new {|typeWeights, quota|
 		^super.new.nodeInit(typeWeights, quota);
 	}
@@ -37,6 +46,10 @@ Wires_Node {
 		quota = qt.copy;
 		// activer le noeud
 		isRunning = true;
+		// ajouter le noeud à l'ensemble des noeuds
+		allNodes.add(this);
+		// initialiser les noeuds en transition
+		transNodes = List();
 	}
 
 	makeArgs {|def, target|
@@ -135,6 +148,7 @@ Wires_Node {
 			if (newNode != node) {
 				// effectuer la transition
 				var bus, rate;
+				transNodes.add(node);
 				subNodes[index][1] = newNode;
 				{
 					rate = node.outBus.rate;
@@ -147,7 +161,8 @@ Wires_Node {
 					1.wait;
 					// terminer la transition
 					synth.set(select[0], newNode.outBus);
-					node.free;
+					node.free(this);
+					transNodes.remove(node);
 				}.fork;
 			};
 			// retourner le noeud courant
@@ -166,15 +181,22 @@ Wires_Node {
 		subNodes.do {|node| node[1].free(this) };
 		if (subGroup.notNil) {subGroup.free};
 		if (group.notNil) {group.free};
+		allNodes.remove(this);
 	}
 
 	release {
 		synth.release;
+		while {synth.isRunning} {0.1.wait};
 	}
 
 	countNodes {|coeff = 1, update = false|
 		var count = subNodes.sum {|n| n[1].countNodes(coeff, update)} + coeff;
 		if (update) {numNodes = count};
 		^count;
+	}
+
+	nodeSet {
+		^(subNodes.collect(_[1]) ++ transNodes).inject(Set[this])
+		{|res, sub| res.union(sub.nodeSet)};
 	}
 }

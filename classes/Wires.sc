@@ -63,6 +63,7 @@ Wires {
 						root.renew((({1.0.rand}!3) * (curNumNodes - [0, 1, 0])).round.max(delta.neg),
 							delta, nil);
 						curNumNodes = newNumNodes;
+						time = time + 1;
 					} {renewLock.signal};
 				}
 			};
@@ -85,10 +86,22 @@ Wires {
 				if (debug.bitTest(0)) {
 					var numSynths = Server.default.numSynths;
 					var countedNodes = instances.sum{|elt| elt.root.numNodes};
-					"Busses: %, Synths: %, NumNodes: %"
+					"[1]Busses: %, Synths: %, Nodes: %"
 					.format(Server.default.audioBusAllocator.blocks.size +
 						Server.default.controlBusAllocator.blocks.size,
 						numSynths, countedNodes.round(0.01)).postln;
+				};
+				if (debug.bitTest(1) && ((time % 16) == 0)) {
+					var keep = instances.inject(Set()) {|res, inst| res.union(inst.root.nodeSet)};
+					var remove = Wires_Node.allNodes - keep;
+					if (remove.isEmpty.not) {
+						"Removing % stray Node(s)".format(remove.size).postln;
+						remove.do(_.free);
+					};
+					"[2]Busses: %, Synths: %, Nodes: %"
+					.format(Server.default.audioBusAllocator.blocks.size +
+						Server.default.controlBusAllocator.blocks.size,
+						Server.default.numSynths, keep.size).postln;
 				};
 				renewFunc.fork;
 				(delay * (2 ** rand(randTime))).wait;

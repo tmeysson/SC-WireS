@@ -38,6 +38,7 @@ Wires_OutNode : Wires_Node {
 		if (newNode != node) {
 			// effectuer la transition
 			var bus, rate;
+			transNodes.add(node);
 			subNodes[0][1] = newNode;
 			{
 				rate = node.outBus.rate;
@@ -50,7 +51,8 @@ Wires_OutNode : Wires_Node {
 				1.wait;
 				// terminer la transition
 				synth.set(select[0], newNode.outBus);
-				node.free;
+				node.free(this);
+				transNodes.remove(node);
 			}.fork;
 		};
 		// retourner le noeud courant
