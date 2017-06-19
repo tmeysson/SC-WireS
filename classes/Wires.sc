@@ -45,12 +45,14 @@ Wires {
 					var newNumNodes, delta;
 					protect {
 						renewLock.wait;
-						newNumNodes = cycleFunc.(time);
-						delta = newNumNodes - curNumNodes;
-						root.renew((({1.0.rand}!3) * (curNumNodes - [0, 1, 0])).round.max(delta.neg),
-							delta, nil);
-						curNumNodes = newNumNodes;
-						time = time + 1;
+						if (instances.includes(this)) {
+							newNumNodes = cycleFunc.(time);
+							delta = newNumNodes - curNumNodes;
+							root.renew((({1.0.rand}!3) * (curNumNodes - [0, 1, 0])).round.max(delta.neg),
+								delta, nil);
+							curNumNodes = newNumNodes;
+							time = time + 1;
+						};
 					} {renewLock.signal};
 				};
 			} {
@@ -58,12 +60,14 @@ Wires {
 					var newNumNodes, delta;
 					protect {
 						renewLock.wait;
-						newNumNodes = (numNodes * (({randNumNodes.rand2}!2 + 1)++[1])).round.max([0,2,0]);
-						delta = (newNumNodes - curNumNodes).asInteger;
-						root.renew((({1.0.rand}!3) * (curNumNodes - [0, 1, 0])).round.max(delta.neg),
-							delta, nil);
-						curNumNodes = newNumNodes;
-						time = time + 1;
+						if (instances.includes(this)) {
+							newNumNodes = (numNodes * (({randNumNodes.rand2}!2 + 1)++[1])).round.max([0,2,0]);
+							delta = (newNumNodes - curNumNodes).asInteger;
+							root.renew((({1.0.rand}!3) * (curNumNodes - [0, 1, 0])).round.max(delta.neg),
+								delta, nil);
+							curNumNodes = newNumNodes;
+							time = time + 1;
+						};
 					} {renewLock.signal};
 				}
 			};
@@ -72,7 +76,7 @@ Wires {
 				Server.default.bootSync;
 				Wires_Def.setup;
 				// créer le groupe de base, si il n'existe pas
-				if (baseGroup.isNil || {baseGroup.isRunning.not})
+				if (baseGroup.isNil or: {baseGroup.isRunning.not})
 				{
 					baseGroup = ParGroup();
 					NodeWatcher.register(baseGroup);
@@ -82,10 +86,10 @@ Wires {
 			root = Wires_OutNode(volume, typeWeights, numNodes);
 			instances.add(this);
 			{
-				root.countNodes(update: true);
 				if (debug.bitTest(0)) {
 					var numSynths = Server.default.numSynths;
-					var countedNodes = instances.sum{|elt| elt.root.numNodes};
+					var countedNodes = instances.sum {|elt|
+						elt.root.countNodes(update: true).numNodes};
 					"[1]Busses: %, Synths: %, Nodes: %"
 					.format(Server.default.audioBusAllocator.blocks.size +
 						Server.default.controlBusAllocator.blocks.size,
