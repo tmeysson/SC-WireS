@@ -5,7 +5,7 @@ Wires {
 	// verrou d'initialisation
 	classvar setupLock;
 	// verrou de renouvellement
-	classvar renewLock;
+	classvar <renewLock;
 	// le groupe parallèle de base
 	classvar <baseGroup;
 
@@ -92,16 +92,20 @@ Wires {
 						numSynths, countedNodes.round(0.01)).postln;
 				};
 				if (debug.bitTest(1) && ((time % 16) == 0)) {
-					var keep = instances.inject(Set()) {|res, inst| res.union(inst.root.nodeSet)};
-					var remove = Wires_Node.allNodes - keep;
-					if (remove.isEmpty.not) {
-						"Removing % stray Node(s)".format(remove.size).postln;
-						remove.do(_.free);
-					};
-					"[2]Busses: %, Synths: %, Nodes: %"
-					.format(Server.default.audioBusAllocator.blocks.size +
-						Server.default.controlBusAllocator.blocks.size,
-						Server.default.numSynths, keep.size).postln;
+					protect {
+						var keep, remove;
+						renewLock.wait;
+						keep = instances.inject(Set()) {|res, inst| res.union(inst.root.nodeSet)};
+						remove = Wires_Node.allNodes - keep;
+						if (remove.isEmpty.not) {
+							"Removing % stray Node(s)".format(remove.size).postln;
+							remove.do(_.free);
+						};
+						"[2]Busses: %, Synths: %, Nodes: %"
+						.format(Server.default.audioBusAllocator.blocks.size +
+							Server.default.controlBusAllocator.blocks.size,
+							Server.default.numSynths, keep.size).postln;
+					} { renewLock.signal };
 				};
 				renewFunc.fork;
 				(delay * (2 ** rand(randTime))).wait;

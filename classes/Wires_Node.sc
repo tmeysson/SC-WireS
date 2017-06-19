@@ -161,8 +161,11 @@ Wires_Node {
 					1.wait;
 					// terminer la transition
 					synth.set(select[0], newNode.outBus);
-					node.free(this);
-					transNodes.remove(node);
+					protect {
+						Wires.renewLock.wait;
+						node.free(this);
+						transNodes.remove(node);
+					} { Wires.renewLock.signal };
 				}.fork;
 			};
 			// retourner le noeud courant
