@@ -187,6 +187,16 @@ Wires_Node {
 		allNodes.remove(this);
 	}
 
+	freeStray {
+		if (isRunning) {
+			synth.free; isRunning = false;
+			if (outBus.notNil) {outBus.free};
+			if (subGroup.notNil) {subGroup.free};
+			if (group.notNil) {group.free};
+			allNodes.remove(this);
+		};
+	}
+
 	release {
 		synth.release;
 		while {synth.isRunning} {0.1.wait};

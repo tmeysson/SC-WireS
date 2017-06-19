@@ -99,7 +99,7 @@ Wires {
 						remove = Wires_Node.allNodes - keep;
 						if (remove.isEmpty.not) {
 							"Removing % stray Node(s)".format(remove.size).postln;
-							remove.do(_.free);
+							remove.do(_.freeStray);
 						};
 						"[2]Busses: %, Synths: %, Nodes: %"
 						.format(Server.default.audioBusAllocator.blocks.size +
