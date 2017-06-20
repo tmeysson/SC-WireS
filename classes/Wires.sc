@@ -100,10 +100,11 @@ Wires {
 						var keep, remove;
 						renewLock.wait;
 						keep = instances.inject(Set()) {|res, inst| res.union(inst.root.nodeSet)};
-						remove = Wires_Node.allNodes - keep;
+						remove = Wires_Node.allNodes.removeAll(keep);
 						if (remove.isEmpty.not) {
 							"Removing % stray Node(s)".format(remove.size).postln;
-							remove.do(_.freeStray);
+							// on procede en ordre inverse pour éliminer les noeuds de bas en haut
+							remove.reverse.do(_.freeStray);
 						};
 						"[2]Busses: %, Synths: %, Nodes: %"
 						.format(Server.default.audioBusAllocator.blocks.size +

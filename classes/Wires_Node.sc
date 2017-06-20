@@ -30,7 +30,7 @@ Wires_Node {
 	var varLevel;
 
 	*initClass {
-		allNodes = Set();
+		allNodes = List();
 	}
 
 	*new {|typeWeights, quota|
@@ -181,21 +181,21 @@ Wires_Node {
 	free {|parent|
 		subNodes.do {|node| node[1].free(this) };
 		if (isRunning) {
-			synth.free;/* isRunning = false;*/
+			synth.free; isRunning = false;
 			if (subGroup.notNil) {subGroup.free};
 			if (group.notNil) {group.free};
+			if (outBus.notNil) {outBus.free};
 		};
-		if (outBus.notNil) {outBus.free};
 		allNodes.remove(this);
 	}
 
 	freeStray {
 		if (isRunning) {
-			synth.free;/* isRunning = false;*/
+			synth.free; isRunning = false;
 			if (subGroup.notNil) {subGroup.free};
 			if (group.notNil) {group.free};
+			if (outBus.notNil) {outBus.free};
 		};
-		if (outBus.notNil) {outBus.free};
 		allNodes.remove(this);
 	}
 

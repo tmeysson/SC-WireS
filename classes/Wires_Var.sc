@@ -17,7 +17,9 @@ Wires_Var : Wires_InnerNode {
 	*getVar {|rate = 'audio', depth = 0, target, varLevel, typeWeights, parent, quota|
 		// si le niveau existe
 		if (varLevel < levels.size) {
-			var level = levels[varLevel][rate];
+			var level = levels[varLevel][rate]
+			// éviter les références multiples
+			.select {|v| v.quota(parent).isNil};
 			// si on doit créer une nouvelle variable
 			if((level.size + 1).reciprocal.coin) {
 				// créer un noeud
@@ -109,6 +111,19 @@ Wires_Var : Wires_InnerNode {
 			}
 		};
 		// sinon, ne rien faire
+	}
+
+	freeStray {
+		// supprimer le noeud
+		super.freeStray;
+		levels[varLevel-1][outBus.rate].remove(this);
+		// si le niveau est vide, le supprimer
+		if (levels[varLevel-1].sum(_.size) == 0)
+		{
+			levels.pop;
+			lvlGroups[varLevel-1].free;
+			lvlGroups.pop;
+		}
 	}
 
 	countNodes {|coeff = 1, update = false|
