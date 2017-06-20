@@ -6,6 +6,8 @@ Wires_Var : Wires_InnerNode {
 
 	// le nombre de références
 	var refs;
+	// le quota courant
+	var curQuota;
 
 	*initClass {
 		levels = List();
@@ -15,7 +17,9 @@ Wires_Var : Wires_InnerNode {
 	*getVar {|rate = 'audio', depth = 0, target, varLevel, typeWeights, parent, quota|
 		// si le niveau existe
 		if (varLevel < levels.size) {
-			var level = levels[varLevel][rate];
+			var level = levels[varLevel][rate]
+			// éviter les références multiples
+			.select {|v| v.quota(parent).isNil};
 			// si on doit créer une nouvelle variable
 			if((level.size + 1).reciprocal.coin) {
 				// créer un noeud
@@ -49,13 +53,25 @@ Wires_Var : Wires_InnerNode {
 		// ajouter dans les variables
 		levels[varLevel-1][outBus.rate].add(this);
 		// enregistrer le quota et la date initiales
+		curQuota = quota;
 		quota = Dictionary().put(parent, quota);
 		date = Dictionary().put(parent, date);
 	}
 
+	replace {|parent|
+		^Wires_InnerNode(outBus.rate, depth, parent.subGroup, varLevel-1, typeWeights,
+			parent, quota[parent]);
+	}
+
 	quota {|parent|
-		// ^quota.values.reduce('max');
 		^quota[parent];
+	}
+
+	updateQuota {|delta, parent|
+		var oldQuota = curQuota;
+		quota[parent] = quota[parent] + delta;
+		curQuota = quota.values.reduce('max');
+		^(curQuota - oldQuota);
 	}
 
 	date {|parent|
@@ -95,6 +111,19 @@ Wires_Var : Wires_InnerNode {
 			}
 		};
 		// sinon, ne rien faire
+	}
+
+	freeStray {
+		// supprimer le noeud
+		super.freeStray;
+		levels[varLevel-1][outBus.rate].remove(this);
+		// si le niveau est vide, le supprimer
+		if (levels[varLevel-1].sum(_.size) == 0)
+		{
+			levels.pop;
+			lvlGroups[varLevel-1].free;
+			lvlGroups.pop;
+		}
 	}
 
 	countNodes {|coeff = 1, update = false|

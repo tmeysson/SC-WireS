@@ -20,5 +20,13 @@ Wires_InnerNode : Wires_Node {
 		args = [out: outBus] ++ args;
 		// créer le Synth
 		this.makeSynth(group ? target);
+		synth.onFree {
+			isRunning = false;
+		};
+	}
+
+	replace {|parent|
+		^Wires_InnerNode(outBus.rate, depth, parent.subGroup, varLevel, typeWeights,
+			parent, quota);
 	}
 }

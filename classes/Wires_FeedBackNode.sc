@@ -14,7 +14,7 @@ Wires_FeedBackNode : Wires_Node {
 		// niveau de variable
 		varLevel = level;
 		// nombre de noeuds
-		numNodes = 0;
+		numNodes = 1;
 		// il n'y a pas de sous-noeuds
 		subNodes = [];
 		// définition
@@ -22,10 +22,18 @@ Wires_FeedBackNode : Wires_Node {
 		// créer le Bus de sortie
 		outBus = Bus.alloc('audio');
 		// créer l'argument
-		in = [in: Wires.instances.choose.root.inBus];
+		in = Wires.instances.choose.root.inBus;
 		// ajouter le volume
 		args = [out: outBus, in: in];
 		// créer le Synth
 		this.makeSynth(target);
+		synth.onFree {
+			isRunning = false;
+		};
+	}
+
+	replace {|parent|
+		^Wires_FeedBackNode(depth, parent.subGroup, varLevel, typeWeights,
+			parent, quota);
 	}
 }
