@@ -75,7 +75,7 @@ Wires_Node {
 		// définition
 		def = nodeDef;
 		// s'ajouter dans allNodes
-		allNodes.add(this);
+		allNodes.addFirst(this);
 		// initialiser l'état
 		isRunning = false;
 	}
@@ -112,6 +112,7 @@ Wires_Node {
 		readers = readers + 1;
 		// décrémenter le potentiel
 		potential = potential - 1;
+		availableNodes[def.rate] = availableNodes[def.rate] - 1;
 		// vérifier si le noeud est toujours lisible
 		if (potential == 0) {pool[def.rate].remove(this)};
 	}
@@ -253,8 +254,8 @@ Wires_Node {
 		// supprimer dans allNodes
 		allNodes.remove(this);
 		// libérer le Synth et le Bus
-		if (isRunning) {synth.free; isRunning = false};
-		outBus.free;
+		if (isRunning) {isRunning = false; synth.free};
+		if (outBus.notNil and: {outBus.index.notNil}) {outBus.free};
 		// cesser de lire les subNodes et les transNodes
 		subNodes.do {|node| node[1].drop};
 		// transNodes.do(_.drop);
@@ -263,36 +264,39 @@ Wires_Node {
 	}
 
 	renew {
-		var index = subNodes.size.rand;
-		// choisir un des sous-noeuds
-		var node = subNodes[index];
-		var rate = node[1].outBus.rate;
-		// créer un Bus
-		var bus = Bus.alloc(rate);
-		// choisir un noeud de remplacement
-		var newNode = pool[rate].choose;
-		// lire le nouveau noeud
-		newNode.read;
-		// effectuer la permutation
-		// transNodes.add(node[1]);
-		subNodes[index] = [node[0], newNode];
-		Routine {
-			// démarrer la transition
-			Synth("wires-trans-%".format(rate).asSymbol,
-				[out: bus, in1: node.outBus, in2: newNode.outBus],
-				transGroup);
-			synth.set([node[0], bus]);
-			// attendre la fin
-			1.wait;
-			// terminer la transition
-			synth.set([node[0], newNode.outBus]);
-			// libérer le Bus
-			bus.free;
-			// cesser de lire l'ancien noeud
-			node[1].drop;
-			// le supprimer des transNodes
-			// transNodes.remove(node[1]);
-		}.play;
+		if (subNodes.size == 0) {^false} {
+			var index = subNodes.size.rand;
+			// choisir un des sous-noeuds
+			var node = subNodes[index];
+			var rate = node[1].outBus.rate;
+			// créer un Bus
+			var bus = Bus.alloc(rate);
+			// choisir un noeud de remplacement
+			var newNode = pool[rate].choose;
+			// lire le nouveau noeud
+			newNode.read;
+			// effectuer la permutation
+			// transNodes.add(node[1]);
+			subNodes[index] = [node[0], newNode];
+			Routine {
+				// démarrer la transition
+				Synth("wires-trans-%".format(rate).asSymbol,
+					[out: bus, in1: node[1].outBus, in2: newNode.outBus],
+					transGroup);
+				synth.set(node[0], bus);
+				// attendre la fin
+				1.wait;
+				// terminer la transition
+				synth.set(node[0], newNode.outBus);
+				// libérer le Bus
+				bus.free;
+				// cesser de lire l'ancien noeud
+				node[1].drop;
+				// le supprimer des transNodes
+				// transNodes.remove(node[1]);
+			}.play;
+			^true;
+		}
 	}
 
 	// free {|parent|
