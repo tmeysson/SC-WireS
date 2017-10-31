@@ -65,12 +65,6 @@ Wires_Def : SynthDef {
 			audio: List(),
 			control: List()
 		]);
-		// // initialiser les definitions
-		// var maxA = 2, maxK = 3;
-		// defs = Dictionary.newFrom([
-		// 	audio: {{List()} ! (maxA+1)} ! (maxK+1),
-		// 	control: {List()} ! (maxK+1)
-		// ]);
 		// compiler les définitions
 		rec = {|elt, prefix, weight, type|
 			// pour chaque définition
@@ -118,12 +112,6 @@ Wires_Def : SynthDef {
 			{'audio'}   {defs['audio'].add(def)}
 			{'control'} {defs['control'].add(def)};
 		};
-		// // ajouter dans la liste correspondante
-		// .do {|def|
-		// 	switch (def.rate)
-		// 	{'audio'}   {defs['audio'][def.nbSubs[0]][def.nbSubs[1]].add(def)}
-		// 	{'control'} {defs['control'][def.nbSubs[0]].add(def)};
-		// };
 
 		// définition du module de sortie
 		if (outDef.isNil) {outDef = this.out};
@@ -140,38 +128,22 @@ Wires_Def : SynthDef {
 			}
 		};
 
-		// if (feedbackDefs.isNil) {
-		// 	feedbackDefs = [
-		// 		SynthDef('wires-feedback', {|out, in|
-		// 			Out.ar(out, InFeedback.ar(in));
-		// 		}),
-		// 		SynthDef('wires-feedback-delay', {|out, in|
-		// 			var delay = Rand(0, 4);
-		// 			Out.ar(out, DelayN.ar(InFeedback.ar(in), delay, delay));
-		// 		})
-		// 	];
-		// };
-
 		if (defaultDefs.isNil) {defaultDefs = this.defaults};
 	}
 
 	*addDefs {
 		// ajouter les définitions
-		// defs.do{|type| type.flat.do(_.add)};
 		defs.do{|type| type.do(_.add)};
 		outDef.add;
 		transDefs.do(_.add);
-		// feedbackDefs.do(_.add);
 		defaultDefs.do(_.add);
 	}
 
 	*removeDefs {
 		// supprimer les définitions
-		// defs.do{|type| type.flat.do(_.remove)};
 		defs.do{|type| type.do(_.remove)};
 		if (outDef.notNil) {outDef.remove};
 		transDefs.do {|def| SynthDef.removeAt(def.name)};
-		// feedbackDefs.do {|def| SynthDef.removeAt(def.name)};
 	}
 
 	remove { SynthDef.removeAt(name) }
@@ -250,27 +222,4 @@ Wires_Def : SynthDef {
 			^defaultDefs[rate];
 		};
 	}
-	// *randDef {|rate, typeWeights, maxK, maxA, maxFB|
-	// 	var minA;
-	// 	var minK;
-	// 	var subSet;
-	// 	var weights;
-	// 	var res;
-	//
-	// 	#minA, minK = if(maxA > 0)
-	// 	{[1, 0]}
-	// 	{[maxFB, if(maxK > 0) {1} {0}]};
-	//
-	// 	subSet = defs[rate][minK..maxK];
-	// 	if (rate == 'audio') {subSet = subSet.collect {|tab| tab[minA..maxA+maxFB]}};
-	//
-	// 	subSet = subSet.flat;
-	// 	weights = subSet.collect {|def| def.weight * typeWeights[def.type]}.normalizeSum;
-	// 	res = subSet[weights.windex];
-	// 	if (res.notNil) {^res}
-	// 	{
-	// 		"WARNING: no Wires_Def of signature [%, %, %]".format(maxK, maxA, maxFB).postln;
-	// 		^defaultDefs[rate];
-	// 	};
-	// }
 }
