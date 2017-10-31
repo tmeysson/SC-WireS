@@ -36,5 +36,8 @@ w.stop;
 
 // multiple
 Wires.multi(num: 5, volume: 0/*0.075*/, typeWeights: [1, 1, 1, 1], numNodes: [8, 4, 0], numNodeCycle: [[32, 16, 2], 32], debug: 2);
+
+// paramètres standard de démonstration
+Wires.multi(num: 6, volume: 0.1, typeWeights: [1, 1, 1, 1], numNodes: [8, 4, 0], numNodeCycle: [[32, 16, 2], 32], debug: 2);
 // arrêter toutes les instances
 Wires.stopAll;
