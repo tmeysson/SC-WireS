@@ -1,70 +1,92 @@
 Wires_OutNode : Wires_Node {
-	var <inBus;
+	*basicNew {|volume|
+		^super.basicNew(Wires_Def.outDef).outNodeInit(volume);
+	}
 
-	*new {|volume = 0.25, typeWeights, quota|
-		^super.new(typeWeights, quota).outNodeInit(volume);
+	*new {|volume|
+		^this.basicNew(volume).start;
 	}
 
 	outNodeInit {|volume|
-		// profondeur
-		depth = -1;
-		// niveau de variable
-		varLevel = 0;
-		// définition
-		def = Wires_Def.outDef;
-		// créer les arguments
-		this.makeArgs(def, Wires.baseGroup);
-		// enregistrer le Bus d'entrée
-		inBus = args[1];
-		// ajouter le volume
-		args = [vol: volume] ++ args;
-		// créer le Synth
-		this.makeSynth(group);
-		// libérer le sous-graphe à la fin
-		synth.onFree {
-			subNodes.do {|node| node[1].free(this) };
-			if (subGroup.notNil) {subGroup.free};
-			if (group.notNil) {group.free};
-			allNodes.remove(this);
-			isRunning = false;
-		};
+		args = [vol: volume];
 	}
 
-	renew {|minQt, delta, parent = nil|
-		var select, node;
-		var newNode;
-		// appliquer le différentiel
-		// NOTE: newDelta == delta et newMinQt == minQt, dans le cas d'un OutNode
-		var newDelta = this.updateQuota(delta, parent);
-		var newMinQt = minQt.max(newDelta.neg);
-		// choisir le sous-noeud
-		select = subNodes[0];
-		node = select[1];
-		newNode = node.renew(newMinQt, newDelta, this);
-		if (newNode != node) {
-			// effectuer la transition
-			var bus, rate;
-			transNodes.add(node);
-			subNodes[0][1] = newNode;
-			rate = node.outBus.rate;
-			bus = Bus.alloc(rate);
-			Synth("wires-trans-%".format(rate).asSymbol,
-				[out: bus, in1: node.outBus, in2: newNode.outBus],
-				synth, 'addBefore').onFree {bus.free};
-			synth.set(select[0], bus);
-			{
-				// attendre la fin de la transition
-				1.wait;
-				// terminer la transition
-				if (isRunning) {synth.set(select[0], newNode.outBus)};
-				protect {
-					Wires.renewLock.wait;
-					node.free(this);
-					transNodes.remove(node);
-				} { Wires.renewLock.signal };
-			}.fork;
-		};
-		// retourner le noeud courant
-		^this;
+	start {
+		super.start(outGroup);
+		synth.onFree {isRunning = false; this.free};
+	}
+
+	release {
+		synth.release;
 	}
 }
+// Wires_OutNode : Wires_Node {
+// 	var <inBus;
+//
+// 	*new {|volume = 0.25, typeWeights, quota|
+// 		^super.new(typeWeights, quota).outNodeInit(volume);
+// 	}
+//
+// 	outNodeInit {|volume|
+// 		// profondeur
+// 		depth = -1;
+// 		// niveau de variable
+// 		varLevel = 0;
+// 		// définition
+// 		def = Wires_Def.outDef;
+// 		// créer les arguments
+// 		this.makeArgs(def, Wires.baseGroup);
+// 		// enregistrer le Bus d'entrée
+// 		inBus = args[1];
+// 		// ajouter le volume
+// 		args = [vol: volume] ++ args;
+// 		// créer le Synth
+// 		this.makeSynth(group);
+// 		// libérer le sous-graphe à la fin
+// 		synth.onFree {
+// 			subNodes.do {|node| node[1].free(this) };
+// 			if (subGroup.notNil) {subGroup.free};
+// 			if (group.notNil) {group.free};
+// 			allNodes.remove(this);
+// 			isRunning = false;
+// 		};
+// 	}
+//
+// 	renew {|minQt, delta, parent = nil|
+// 		var select, node;
+// 		var newNode;
+// 		// appliquer le différentiel
+// 		// NOTE: newDelta == delta et newMinQt == minQt, dans le cas d'un OutNode
+// 		var newDelta = this.updateQuota(delta, parent);
+// 		var newMinQt = minQt.max(newDelta.neg);
+// 		// choisir le sous-noeud
+// 		select = subNodes[0];
+// 		node = select[1];
+// 		newNode = node.renew(newMinQt, newDelta, this);
+// 		if (newNode != node) {
+// 			// effectuer la transition
+// 			var bus, rate;
+// 			transNodes.add(node);
+// 			subNodes[0][1] = newNode;
+// 			rate = node.outBus.rate;
+// 			bus = Bus.alloc(rate);
+// 			Synth("wires-trans-%".format(rate).asSymbol,
+// 				[out: bus, in1: node.outBus, in2: newNode.outBus],
+// 			synth, 'addBefore').onFree {bus.free};
+// 			synth.set(select[0], bus);
+// 			{
+// 				// attendre la fin de la transition
+// 				1.wait;
+// 				// terminer la transition
+// 				if (isRunning) {synth.set(select[0], newNode.outBus)};
+// 				protect {
+// 					Wires.renewLock.wait;
+// 					node.free(this);
+// 					transNodes.remove(node);
+// 				} { Wires.renewLock.signal };
+// 			}.fork;
+// 		};
+// 		// retourner le noeud courant
+// 		^this;
+// 	}
+// }
