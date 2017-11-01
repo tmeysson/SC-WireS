@@ -31,7 +31,8 @@ Wires {
 			// boucle de renouvellement
 			{
 				2.wait;
-				Wires_Node.pool.choose.select(_.isRunning).scramble[..3].do(_.replace(typeWeights));
+				Wires_Node.pool.values.reduce('++').select(_.isRunning)
+				.scramble[..3].do(_.replace(typeWeights));
 			// 	var cur;
 			// 	var size = Wires_Node.allNodes.size;
 			// 	(32/size).wait;
