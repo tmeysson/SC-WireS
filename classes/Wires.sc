@@ -89,7 +89,7 @@ Wires {
 				if (debug.bitTest(0)) {
 					var numSynths = Server.default.numSynths;
 					var countedNodes = instances.sum {|elt|
-						elt.root.countNodes(update: true).numNodes};
+						elt.root.countNodes(update: true); elt.root.numNodes};
 					"[1]Busses: %, Synths: %, Nodes: %"
 					.format(Server.default.audioBusAllocator.blocks.size +
 						Server.default.controlBusAllocator.blocks.size,
