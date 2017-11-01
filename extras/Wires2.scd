@@ -11,6 +11,9 @@ constantes:                   1
 sequences:                    2
 */
 
+Server.supernova;
+Server.scsynth;
+
 w = Wires(0.025, 3, 10, 30, 8, [3,1,1,2]);
 
 w.free;
