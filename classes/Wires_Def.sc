@@ -119,14 +119,26 @@ Wires_Def : SynthDef {
 		// définition de la transition
 		if (transDefs.isNil) {
 			transDefs = ['audio', 'control'].collect {|it|
-				var rate = switch(it) {'audio'} {\ar} {'control'} {\kr};
+		 		var rate = switch(it) {'audio'} {\ar} {'control'} {\kr};
+				var in = switch(it) {'audio'} {InFeedback.ar(_)} {'control'} {In.kr(_)};
 				SynthDef("wires-trans-%".format(it).asSymbol, {|out, in1, in2|
 					var env = Line.kr(doneAction: 2);
-					Out.perform(rate, out, ((1 - env) * In.perform(rate, in1)) +
-						(env * In.perform(rate, in2)));
+					Out.perform(rate, out, ((1 - env) * in.(in1)) +
+						(env * in.(in2)));
 				})
 			}
 		};
+		// // définition de la transition
+		// if (transDefs.isNil) {
+		// 	transDefs = ['audio', 'control'].collect {|it|
+		// 		var rate = switch(it) {'audio'} {\ar} {'control'} {\kr};
+		// 		SynthDef("wires-trans-%".format(it).asSymbol, {|out, in1, in2|
+		// 			var env = Line.kr(doneAction: 2);
+		// 			Out.perform(rate, out, ((1 - env) * In.perform(rate, in1)) +
+		// 			(env * In.perform(rate, in2)));
+		// 		})
+		// 	}
+		// };
 
 		if (defaultDefs.isNil) {defaultDefs = this.defaults};
 	}
