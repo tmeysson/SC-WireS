@@ -3,16 +3,16 @@ Wires_OutNode : Wires_Node {
 		^super.basicNew(Wires_Def.outDef).outNodeInit(volume);
 	}
 
-	*new {|volume|
-		^this.basicNew(volume).start;
+	*new {|volume, node|
+		^this.basicNew(volume).start(node);
 	}
 
 	outNodeInit {|volume|
 		args = [vol: volume];
 	}
 
-	start {
-		super.start(outGroup);
+	start {|node|
+		super.start(outGroup, [node]);
 		// synth.onFree {isRunning = false; this.free};
 	}
 

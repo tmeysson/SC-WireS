@@ -26,7 +26,9 @@ Wires {
 			// démarrer les noeuds
 			Wires_Node.pool.do {|rate| rate.do(_.start)};
 			// créer une sortie
-			outs = {Wires_OutNode.new(volume)} ! nbOuts;
+			// outs = {Wires_OutNode.new(volume)} ! nbOuts;
+			outs = Wires_Node.pool['audio'].scramble[..nbOuts-1].collect
+			{|node| Wires_OutNode.new(volume, node)};
 
 			// boucle de renouvellement
 			{

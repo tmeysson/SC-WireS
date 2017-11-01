@@ -68,10 +68,10 @@ Wires_Node {
 		lock = sem ? Semaphore();
 	}
 
-	start {|altGroup|
+	start {|altGroup, nodes = #[]|
 		// choisir les sous-noeuds
 		subNodes = def.synthArgs.collect {|rate, i| if(rate != 'scalar')
-			{["p%".format(i).asSymbol, pool[rate].choose/*.read*/]}
+			{["p%".format(i).asSymbol, nodes[i] ? pool[rate].choose]}
 		}.select(_.notNil);
 		// ajouter les sous-noeuds aux arguments
 		args = args ++ subNodes.collect {|node| [node[0], node[1].outBus]}.reduce('++');
