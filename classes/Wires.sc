@@ -1,13 +1,13 @@
 // CLASSE D'INTERFACE DE WIRES
 Wires {
-	var out;
+	var outs;
 	var loop;
 
-	*new {|volume = 0, nbAudio = 5, nbControl = 10, typeWeights = #[1,1,1,1]|
-		^super.new.wiresInit(volume, nbAudio, nbControl, typeWeights);
+	*new {|volume = 0, nbOuts = 1, nbAudio = 5, nbControl = 10, nbReplace = 4, typeWeights = #[1,1,1,1]|
+		^super.new.wiresInit(volume, nbOuts, nbAudio, nbControl, nbReplace, typeWeights);
 	}
 
-	wiresInit {|volume, nbAudio, nbControl, typeWeights|
+	wiresInit {|volume, nbOuts, nbAudio, nbControl, nbReplace, typeWeights|
 		loop = Routine {
 			Server.default.bootSync;
 			Wires_Def.setup;
@@ -26,13 +26,13 @@ Wires {
 			// démarrer les noeuds
 			Wires_Node.pool.do {|rate| rate.do(_.start)};
 			// créer une sortie
-			out = Wires_OutNode.new(volume);
+			outs = {Wires_OutNode.new(volume)} ! nbOuts;
 
 			// boucle de renouvellement
 			{
 				2.wait;
 				Wires_Node.pool.values.reduce('++').select(_.isRunning)
-				.scramble[..3].do(_.replace(typeWeights));
+				.scramble[..nbReplace-1].do(_.replace(typeWeights));
 			// 	var cur;
 			// 	var size = Wires_Node.allNodes.size;
 			// 	(32/size).wait;
@@ -50,7 +50,7 @@ Wires {
 	free {
 		loop.stop;
 		Routine {
-			out.release;
+			outs.do(_.release);
 			2.wait;
 			while {Wires_Node.allNodes.isEmpty.not}
 			{Wires_Node.allNodes.first.free};
