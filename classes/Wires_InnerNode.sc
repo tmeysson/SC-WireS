@@ -5,12 +5,12 @@ Wires_InnerNode : Wires_Node {
 	// 	dummyBus = Dictionary.newFrom([audio: Bus.audio, control: Bus.control]);
 	// }
 
-	*basicNew {|def|
-		^super.basicNew(def).innerNodeInit;
+	*basicNew {|def, sem|
+		^super.basicNew(def, sem).innerNodeInit;
 	}
 
-	*new {|def|
-		^this.basicNew(def).start;
+	*new {|def, sem|
+		^this.basicNew(def, sem).start;
 	}
 
 	innerNodeInit {/*|noBus = false|
@@ -36,29 +36,40 @@ Wires_InnerNode : Wires_Node {
 	outBus_ {|bus|
 		if (outBus.notNil) {outBus.free};
 		outBus = bus;
+		if (isRunning) {synth.set('out', outBus)};
 	}
 
 	replace {|typeWeights = #[1,1,1,1]|
-		Routine {
-			var newNode = this.class.new(Wires_Def.randDef(def.rate, typeWeights));
-			var busses;
-			lock.wait;
-			newNode.lock.wait;
-			if (isRunning) {
-				busses = {Bus.alloc(def.rate)} ! 2;
-				Synth("wires-trans-%".format(def.rate).asSymbol,
-					[out: outBus, in1: busses[0], in2: busses[1], transGroup]);
-				synth.set('out', busses[0]);
-				newNode.synth.set('out', busses[1]);
-				1.wait;
-				newNode.synth.set('out', outBus);
-				newNode.outBus = outBus;
-				busses.do(_.free);
-				this.free(false);
-			};
-			newNode.lock.signal;
-			lock.signal;
-		}.play;
+		switch (def.rate)
+		{'audio'}
+		{
+			var newNode = this.class.new(Wires_Def.randDef('audio', typeWeights), lock);
+			newNode.outBus = outBus;
+			this.release(false);
+		}
+		{'control'}
+		{
+			Routine {
+				lock.wait;
+				if (isRunning) {
+					var newNode = this.class.new(Wires_Def.randDef('control', typeWeights), lock);
+					var busses;
+					// newNode.lock.wait;
+					busses = {Bus.control} ! 2;
+					Synth('wires-trans-control',
+						[out: outBus, in1: busses[0], in2: busses[1], transGroup]);
+					synth.set('out', busses[0]);
+					newNode.outBus = busses[1];
+					1.wait;
+					// newNode.synth.set('out', outBus);
+					newNode.outBus = outBus;
+					this.free(false);
+					busses[0].free;
+					// newNode.lock.signal;
+				};
+				lock.signal;
+			}.play;
+		};
 	}
 
 	free {|freeBus = true|

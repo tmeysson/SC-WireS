@@ -13,10 +13,10 @@ Wires_OutNode : Wires_Node {
 
 	start {
 		super.start(outGroup);
-		synth.onFree {isRunning = false; this.free};
+		// synth.onFree {isRunning = false; this.free};
 	}
 
-	release {
-		synth.release;
-	}
+	// release {
+	// 	synth.release;
+	// }
 }

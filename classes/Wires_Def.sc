@@ -170,7 +170,9 @@ Wires_Def : SynthDef {
 				switch (rate = graph.rate)
 				{'scalar'}  {rate = 'control'; Out.kr(out, graph)}
 				{'control'} {Out.kr(out, graph)}
-				{'audio'}   {Out.ar(out, graph)};
+				// {'audio'}   {Out.ar(out, graph)};
+				{'audio'}
+				{Out.ar(out, graph * EnvGen.kr(Env.asr(1,1,1), \gate.kr(1), doneAction: 2))};
 			}
 		).defInit(rate, parms, weight, type);
 	}

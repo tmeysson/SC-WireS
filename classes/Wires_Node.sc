@@ -11,7 +11,7 @@ Wires_Node {
 	// la définition et les arguments
 	var def, args;
 	// le Synth et son état
-	var <synth, isRunning;
+	var <synth, <isRunning;
 	// les sous-noeuds
 	var subNodes;
 	// les noeuds en cours de transition
@@ -45,15 +45,15 @@ Wires_Node {
 		if (outGroup.notNil) {outGroup.free; outGroup = nil};
 	}
 
-	*basicNew {|def|
-		^super.new.nodeInit(def);
+	*basicNew {|def, sem|
+		^super.new.nodeInit(def, sem);
 	}
 
-	*new {|def|
-		^this.basicNew(def).start;
+	*new {|def, sem|
+		^this.basicNew(def, sem).start;
 	}
 
-	nodeInit {|nodeDef|
+	nodeInit {|nodeDef, sem|
 		// date
 		date = Date.getDate.rawSeconds;
 		// initialiser les noeuds en transition
@@ -65,7 +65,7 @@ Wires_Node {
 		// initialiser l'état
 		isRunning = false;
 		// verrou
-		lock = Semaphore();
+		lock = sem ? Semaphore();
 	}
 
 	start {|altGroup|
@@ -76,8 +76,8 @@ Wires_Node {
 		// ajouter les sous-noeuds aux arguments
 		args = args ++ subNodes.collect {|node| [node[0], node[1].outBus]}.reduce('++');
 		// créer le synth
-		synth = Synth(def.name, args, altGroup ? group);
 		isRunning = true;
+		synth = Synth(def.name, args, altGroup ? group);
 	}
 
 	// read {
@@ -108,6 +108,11 @@ Wires_Node {
 		// transNodes.do(_.drop);
 		// libérer l'objet
 		^super.free;
+	}
+
+	release {|freeBus = true|
+		synth.onFree {isRunning = false; this.free(freeBus)};
+		synth.release;
 	}
 
 	// renew {

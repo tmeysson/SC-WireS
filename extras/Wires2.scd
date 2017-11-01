@@ -1,4 +1,4 @@
-w = Wires(0.1);
+w = Wires(0.05);
 
 w.free;
 
