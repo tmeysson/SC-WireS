@@ -6,7 +6,7 @@ Wires_Def : SynthDef {
 	// les définitions
 	classvar defs;
 	// la définition du module de sortie
-	classvar <outDef;
+	classvar <outDefs;
 	// les SynthDef de transition
 	classvar transDefs;
 	// les SynthDef de réinjection
@@ -114,7 +114,7 @@ Wires_Def : SynthDef {
 		};
 
 		// définition du module de sortie
-		if (outDef.isNil) {outDef = this.out};
+		if (outDefs.isNil) {outDefs = this.outs};
 
 		// définition de la transition
 		if (transDefs.isNil) {
@@ -146,7 +146,7 @@ Wires_Def : SynthDef {
 	*addDefs {
 		// ajouter les définitions
 		defs.do{|type| type.do(_.add)};
-		outDef.add;
+		outDefs.do(_.add);
 		transDefs.do(_.add);
 		defaultDefs.do(_.add);
 	}
@@ -154,7 +154,7 @@ Wires_Def : SynthDef {
 	*removeDefs {
 		// supprimer les définitions
 		defs.do{|type| type.do(_.remove)};
-		if (outDef.notNil) {outDef.remove};
+		if (outDefs.notNil) {outDefs.do(_.remove)};
 		transDefs.do {|def| SynthDef.removeAt(def.name)};
 	}
 
@@ -189,20 +189,40 @@ Wires_Def : SynthDef {
 		{synthArgs.sum {|it| [(it == 'control').asInteger, (it == 'audio').asInteger]}};
 	}
 
-	*out {
-		if (UGen.findMethod('antiPok').notNil) {
-			^super.new('wires-out', {|vol = 0.25, p0, gate = 1|
-				Out.ar(0, Pan2.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(p0).antiPok,
-					DemandEnvGen.kr(Dwhite(-1, 1), 2 ** Dwhite(0, 6))
-				))
-			}).outDefInit;
-		} {
-			^super.new('wires-out', {|vol = 0.25, p0, gate = 1|
-				Out.ar(0, Pan2.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(p0),
-					DemandEnvGen.kr(Dwhite(-1, 1), 2 ** Dwhite(0, 6))
-				))
-			}).outDefInit;
-		};
+	*outs {
+		^Dictionary.newFrom(
+			if (UGen.findMethod('antiPok').notNil) {[
+				stereo: super.new('wires-out-stereo', {|vol = 0.25, p0, gate = 1|
+					Out.ar(0, Pan2.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(p0).antiPok,
+						DemandEnvGen.kr(Dwhite(-1, 1), 2 ** Dwhite(0, 6))
+					))
+				}).outDefInit,
+				quad: super.new('wires-out-quad', {|vol = 0.25, p0, gate = 1|
+					Out.ar(0, Pan4.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(p0).antiPok,
+						DemandEnvGen.kr(Dwhite(-1, 1), 2 ** Dwhite(0, 6)),
+						DemandEnvGen.kr(Dwhite(-1, 1), 2 ** Dwhite(0, 6))
+					))
+				}).outDefInit,
+				chan: super.new('wires-out-chan', {|vol = 0.25, chan = 0, p0, gate = 1|
+					Out.ar(chan, vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(p0).antiPok)
+				}).outDefInit
+			]} {[
+				stereo: super.new('wires-out-stereo', {|vol = 0.25, p0, gate = 1|
+					Out.ar(0, Pan2.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(p0),
+						DemandEnvGen.kr(Dwhite(-1, 1), 2 ** Dwhite(0, 6))
+					))
+				}).outDefInit,
+				quad: super.new('wires-out-quad', {|vol = 0.25, p0, gate = 1|
+					Out.ar(0, Pan4.ar(vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(p0),
+						DemandEnvGen.kr(Dwhite(-1, 1), 2 ** Dwhite(0, 6)),
+						DemandEnvGen.kr(Dwhite(-1, 1), 2 ** Dwhite(0, 6))
+					))
+				}).outDefInit,
+				chan: super.new('wires-out-chan', {|vol = 0.25, chan = 0, p0, gate = 1|
+					Out.ar(chan, vol * EnvGen.kr(Env.asr(1,1,1), gate, doneAction: 2) * In.ar(p0))
+				}).outDefInit
+			]}
+		)
 	}
 
 	outDefInit {
