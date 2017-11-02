@@ -1,43 +1,26 @@
-// choisir un type de serveur
-// a priori, supernova est plus efficace (une optimisation est mise en place)
-Server.program;
+/*
+volume:                       0.05
+nb sorties:                   3
+nb noeuds audio:              10
+nb noeuds controle:           30
+nb noeuds remplaces par tour: 8
+poids:
+oscillateurs:                 3
+arithmetiques:                1
+constantes:                   1
+sequences:                    2
+*/
+
 Server.supernova;
 Server.scsynth;
 
-// démarrer un graphe par l'interface
-// silencieux si volume = 0
-w = Wires(volume: 0 ,typeWeights: [1, 1, 1, 1], numNodes: [10, 4, 2], randNumNodes: 0.5, debug: 1);
-// arrêter le graphe
-w.stop;
+w = Wires(0.05, 3, 10, 30, 8, [3,1,1,2]);
 
-// ensemble de graphes
-// paramètres:
-// num: nombre de graphes
-// volume: volume de chaque graphe (à régler suivant le contexte, valeur basse le plus souvent)
-// typeWeights: poids de probabilité de chaque catégorie de noeud
-//   - oscillateurs
-//   - opérations algébriques
-//   - constante numérique
-//   - générateur de séquence
-// numNodes: nombre de noeuds des graphes (par catégorie)
-//   - noeuds de contrôle
-//   - noeuds audio
-//   - noeuds de réinjection
-//  debug: afficher des informations sur le nombre de Synths et de Bus, et le nombre de noeuds estimé
-Wires.multi(num: 5, volume: 0/*0.075*/, typeWeights: [1, 1, 1, 1], numNodes: [10, 4, 2], randNumNodes: 0.5, debug: 1);
-Wires.multi(num: 5, volume: 0.075, typeWeights: [1, 1, 1, 1], numNodes: [10, 4, 2], randNumNodes: 0.5, debug: 1);
-// arrêter toutes les instances
-Wires.stopAll;
+w.free;
 
-// nombre de noeuds cyclique
-w = Wires(volume: 0 ,typeWeights: [1, 1, 1, 1], numNodes: [8, 4, 0], numNodeCycle: [[32, 16, 2], 32], debug: 1);
-// arrêter le graphe
-w.stop;
-
-// multiple
-Wires.multi(num: 5, volume: 0/*0.075*/, typeWeights: [1, 1, 1, 1], numNodes: [8, 4, 0], numNodeCycle: [[32, 16, 2], 32], debug: 2);
-
-// paramètres standard de démonstration
-Wires.multi(num: 6, volume: 0.1, typeWeights: [1, 1, 1, 1], numNodes: [8, 4, 0], numNodeCycle: [[32, 16, 2], 32], debug: 2);
-// arrêter toutes les instances
-Wires.stopAll;
+(
+"N:% A:% K:%".format(
+	Wires_Node.allNodes.size,
+	Server.default.audioBusAllocator.blocks.size,
+	Server.default.controlBusAllocator.blocks.size)
+)
