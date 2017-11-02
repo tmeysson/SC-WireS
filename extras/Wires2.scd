@@ -1,5 +1,5 @@
 /*
-volume:                       0.25
+volume:                       0.05
 nb sorties:                   3
 nb noeuds audio:              10
 nb noeuds controle:           30
@@ -14,7 +14,7 @@ sequences:                    2
 Server.supernova;
 Server.scsynth;
 
-w = Wires(0.025, 3, 10, 30, 8, [3,1,1,2]);
+w = Wires(0.05, 3, 10, 30, 8, [3,1,1,2]);
 
 w.free;
 
