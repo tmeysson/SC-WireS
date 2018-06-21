@@ -3,12 +3,13 @@ Wires {
 	var outs;
 	var loop;
 
-	*new {|volume = 0, outMode = 'stereo', nbOuts = 1,
-		nbAudio = 5, nbControl = 10, nbReplace = 4, typeWeights = #[1,1,1,1]|
-		^super.new.wiresInit(volume, outMode, nbOuts, nbAudio, nbControl, nbReplace, typeWeights);
+	*new {|volume = 0, outMode = 'stereo', nbOuts = 1, nbAudio = 5, nbControl = 10,
+		timeReplace = 2, nbReplace = 4, typeWeights = #[1,1,1,1]|
+		^super.new.wiresInit(volume, outMode, nbOuts, nbAudio, nbControl,
+			timeReplace, nbReplace, typeWeights);
 	}
 
-	wiresInit {|volume, outMode, nbOuts, nbAudio, nbControl, nbReplace, typeWeights|
+	wiresInit {|volume, outMode, nbOuts, nbAudio, nbControl, timeReplace, nbReplace, typeWeights|
 		var mode = if (outMode == 'chan') {{|n|n}} {outMode};
 		loop = Routine {
 			Server.default.bootSync;
@@ -34,7 +35,7 @@ Wires {
 
 			// boucle de renouvellement
 			{
-				2.wait;
+				timeReplace.wait;
 				Wires_Node.pool.values.reduce('++').select(_.isRunning)
 				.scramble[..nbReplace-1].do(_.replace(typeWeights));
 			// 	var cur;
