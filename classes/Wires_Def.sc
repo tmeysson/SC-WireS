@@ -76,16 +76,21 @@ Wires_Def : SynthDef {
 					// énumérer les combinaisons de paramètres
 					({|k|
 						[
-							['scalar', { Rand(-1, 1) }],
+							// ['scalar', { Rand(-1, 1) }],
+							['scalar', {|n| In.kr("p%".format(n).asSymbol.kr) }],
 							['control', {|n| In.kr("p%".format(n).asSymbol.kr) }],
 							['audio', {|n| InFeedback.ar("p%".format(n).asSymbol.kr) }]
 						][def[1][k]]
 					} ! def[1].size).allTuples
 					// pour chaque combinaison
 					.collect {|parms, j|
+						// DEBUG: supprimer les defs ne contenant que des paramètres 'scalar'
+						// if (parms.select {|p| p[0] != 'scalar'}.size != 0) {
 						// créer la définition
 						this.new("%-%-%".format(prefix, i, j), def[0], parms, weight, type);
+						// } {nil}
 					}
+					// .select(_.notNil);
 				}
 				// cas d'une pondération
 				{def[0].isNumber}
@@ -187,6 +192,10 @@ Wires_Def : SynthDef {
 		// enregistrer le nombre de fils audio/contrôle
 		nbSubs = if (synthArgs.isEmpty) {[0, 0]}
 		{synthArgs.sum {|it| [(it == 'control').asInteger, (it == 'audio').asInteger]}};
+	}
+
+	*avgSubs {
+		^defs.collect {|type| type.sum(_.nbSubs) / type.size};
 	}
 
 	*outs {

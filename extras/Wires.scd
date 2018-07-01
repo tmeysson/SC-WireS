@@ -8,6 +8,12 @@ w = Wires(volume: 0.05, outMode: 'stereo', nbOuts: 3, nbAudio: 10, nbControl: 30
 	timeReplace: 2, nbReplace: 8, typeWeights: [3,1,1,2]);
 )
 
+// version avec interface
+(
+w = Wires(volume: 0.05, outMode: 'stereo', nbOuts: 5, nbAudio: 10, nbControl: 30,
+	timeReplace: 60, nbReplace: 8, typeWeights: [3,1,1,1], intfSize: [2,3]);
+)
+
 // version en sortie a nbChan canaux
 (
 var nbChan = 8;

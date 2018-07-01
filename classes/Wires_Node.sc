@@ -2,7 +2,7 @@ Wires_Node {
 	// l'ensemble des noeuds existants
 	classvar <allNodes;
 	// les listes de noeuds disponibles
-	classvar <pool;
+	classvar <>pool;
 	// le nombre total de lectures disponibles
 	// classvar <availableNodes;
 	// les ParGroup
@@ -29,7 +29,7 @@ Wires_Node {
 
 	*initClass {
 		allNodes = List();
-		pool = Dictionary.newFrom([audio: List(), control: List()]);
+		pool = Dictionary.newFrom([audio: List(), control: List(), scalar: List()]);
 		// availableNodes = Dictionary.newFrom([audio: 0, control: 0]);
 	}
 
@@ -70,9 +70,12 @@ Wires_Node {
 
 	start {|altGroup, nodes = #[]|
 		// choisir les sous-noeuds
-		subNodes = def.synthArgs.collect {|rate, i| if(rate != 'scalar')
-			{["p%".format(i).asSymbol, nodes[i] ? pool[rate].choose]}
-		}.select(_.notNil);
+		subNodes = def.synthArgs.collect {|rate, i|
+			["p%".format(i).asSymbol, nodes[i] ? pool[rate].choose]
+		};
+		// subNodes = def.synthArgs.collect {|rate, i| if(rate != 'scalar')
+		// 	{["p%".format(i).asSymbol, nodes[i] ? pool[rate].choose]}
+		// }.select(_.notNil);
 		// ajouter les sous-noeuds aux arguments
 		args = args ++ subNodes.collect {|node| [node[0], node[1].outBus]}.reduce('++');
 		// créer le synth

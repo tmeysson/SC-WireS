@@ -2,14 +2,16 @@
 Wires {
 	var outs;
 	var loop;
+	var intf;
 
 	*new {|volume = 0, outMode = 'stereo', nbOuts = 1, nbAudio = 5, nbControl = 10,
-		timeReplace = 2, nbReplace = 4, typeWeights = #[1,1,1,1]|
+		timeReplace = 2, nbReplace = 4, typeWeights = #[1,1,1,1], intfSize = #[3,4]|
 		^super.new.wiresInit(volume, outMode, nbOuts, nbAudio, nbControl,
-			timeReplace, nbReplace, typeWeights);
+			timeReplace, nbReplace, typeWeights, intfSize);
 	}
 
-	wiresInit {|volume, outMode, nbOuts, nbAudio, nbControl, timeReplace, nbReplace, typeWeights|
+	wiresInit {|volume, outMode, nbOuts, nbAudio, nbControl,
+		timeReplace, nbReplace, typeWeights, intfSize|
 		var mode = if (outMode == 'chan') {{|n|n}} {outMode};
 		loop = Routine {
 			Server.default.bootSync;
@@ -21,6 +23,15 @@ Wires {
 			// créer un ensemble de noeuds
 			nbAudio.do { Wires_InnerNode.basicNew(Wires_Def.randDef('audio', typeWeights)) };
 			nbControl.do { Wires_InnerNode.basicNew(Wires_Def.randDef('control', typeWeights)) };
+			// ajouter une interface si sa taille est non-nulle
+			if (intfSize.reduce('*') > 0)
+			{
+				intf = true;
+				Wires_Interface.createNodes(intfSize.reduce('*'));
+				{Wires_Interface.createInterface(*intfSize)}.defer;
+			} {
+				intf = false
+			};
 			// démarrer les noeuds
 			// while {Wires_Node.availableNodes['audio'] < nbAudio}
 			// { Wires_InnerNode.basicNew(Wires_Def.randDef('audio', typeWeights)) };
@@ -36,7 +47,9 @@ Wires {
 			// boucle de renouvellement
 			{
 				timeReplace.wait;
-				Wires_Node.pool.values.reduce('++').select(_.isRunning)
+				Wires_Node.pool.values.reduce('++')
+				.select(_.isKindOf(Wires_Interface).not)
+				.select(_.isRunning)
 				.scramble[..nbReplace-1].do(_.replace(typeWeights));
 			// 	var cur;
 			// 	var size = Wires_Node.allNodes.size;
@@ -60,6 +73,8 @@ Wires {
 			while {Wires_Node.allNodes.isEmpty.not}
 			{Wires_Node.allNodes.first.free};
 			Wires_Node.freeGroups;
+			Wires_Node.pool = Dictionary.newFrom([audio: List(), control: List(), scalar: List()]);
+			if (intf) {Wires_Interface.destroy};
 		}.play;
 	}
 }
